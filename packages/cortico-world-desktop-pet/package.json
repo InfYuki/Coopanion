@@ -1,77 +1,78 @@
 {
-  "name": "cortico-world-desktop-pet",
-  "version": "0.2.0",
-  "type": "module",
-  "description": "Cortico World: a desktop pet that talks in bubbles, asks with options, walks, emotes, hears you through FunASR's SenseVoice or Whisper on sherpa-onnx, and can operate the computer (screenshots, mouse, keyboard and windows), yielding whenever you touch the machine",
-  "author": "Pal AI Lab",
-  "license": "AGPL-3.0-or-later",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Pal-AI-Lab/Coopanion.git",
-    "directory": "packages/cortico-world-desktop-pet"
-  },
-  "homepage": "https://github.com/Pal-AI-Lab/Coopanion/tree/main/packages/cortico-world-desktop-pet#readme",
-  "bugs": {
-    "url": "https://github.com/Pal-AI-Lab/Coopanion/issues"
-  },
-  "keywords": [
-    "cortico-world",
-    "cortico",
-    "desktop-pet",
-    "funasr",
-    "whisper",
-    "computer-use",
-    "desktop-automation"
-  ],
-  "engines": {
-    "node": ">=22"
-  },
-  "packageManager": "pnpm@11.28.6",
-  "main": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./web/*": "./web/*",
-    "./host/*": "./host/*"
-  },
-  "cortico": {
-    "kind": "world",
-    "api": 6,
-    "webUiClient": "dist/webui.js",
-    "webUiStyle": "dist/webui.css",
-    "describe": "describe.json"
-  },
-  "files": [
-    "src",
-    "web",
-    "host",
-    "dist",
-    "README.md",
-    "LICENSE",
-    "THIRD_PARTY_NOTICES.md",
-    "CHANGELOG.md",
-    "describe.json"
-  ],
-  "scripts": {
-    "build": "node scripts/build-webui.mjs",
-    "test": "vitest run",
-    "test:cua-e2e": "vitest run --config vitest.cua-e2e.config.ts",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "fflate": "0.8.3",
-    "jpeg-js": "^0.4.4",
-    "koffi": "3.3.1",
-    "opencc-js": "^1.4.1",
-    "sherpa-onnx-node": "1.13.8",
-    "ws": "^8.18.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.10.0",
-    "@types/ws": "^8.5.13",
-    "electron": "44.4.4",
-    "esbuild": "^0.28.2",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
-  }
+    "name":  "cortico-world-desktop-pet",
+    "version":  "0.2.0",
+    "type":  "module",
+    "description":  "Cortico World: a desktop pet that talks in bubbles, asks with options, walks, emotes, hears you through FunASR\u0027s SenseVoice or Whisper on sherpa-onnx, and can operate the computer (screenshots, mouse, keyboard and windows), yielding whenever you touch the machine",
+    "author":  "Pal AI Lab",
+    "license":  "AGPL-3.0-or-later",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "https://github.com/Pal-AI-Lab/Coopanion.git",
+                       "directory":  "packages/cortico-world-desktop-pet"
+                   },
+    "homepage":  "https://github.com/Pal-AI-Lab/Coopanion/tree/main/packages/cortico-world-desktop-pet#readme",
+    "bugs":  {
+                 "url":  "https://github.com/Pal-AI-Lab/Coopanion/issues"
+             },
+    "keywords":  [
+                     "cortico-world",
+                     "cortico",
+                     "desktop-pet",
+                     "funasr",
+                     "whisper",
+                     "computer-use",
+                     "desktop-automation"
+                 ],
+    "engines":  {
+                    "node":  "\u003e=22"
+                },
+    "packageManager":  "pnpm@11.28.6",
+    "main":  "./src/index.ts",
+    "exports":  {
+                    ".":  "./src/index.ts",
+                    "./web/*":  "./web/*",
+                    "./host/*":  "./host/*"
+                },
+    "cortico":  {
+                    "kind":  "world",
+                    "api":  6,
+                    "webUiClient":  "dist/webui.js",
+                    "webUiStyle":  "dist/webui.css",
+                    "describe":  "describe.json"
+                },
+    "files":  [
+                  "src",
+                  "web",
+                  "host",
+                  "dist",
+                  "README.md",
+                  "LICENSE",
+                  "THIRD_PARTY_NOTICES.md",
+                  "CHANGELOG.md",
+                  "describe.json"
+              ],
+    "scripts":  {
+                    "build":  "node scripts/build-webui.mjs",
+                    "test":  "vitest run",
+                    "test:cua-e2e":  "vitest run --config vitest.cua-e2e.config.ts",
+                    "typecheck":  "tsc --noEmit"
+                },
+    "dependencies":  {
+                         "fflate":  "0.8.3",
+                         "jpeg-js":  "^0.4.4",
+                         "koffi":  "3.3.1",
+                         "opencc-js":  "^1.4.1",
+                         "sherpa-onnx-node":  "1.13.8",
+                         "ws":  "^8.18.0",
+                         "cortico-world-dsh-monitor":  "workspace:*"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^22.10.0",
+                            "@types/ws":  "^8.5.13",
+                            "electron":  "44.4.4",
+                            "esbuild":  "^0.28.2",
+                            "tsx":  "^4.19.2",
+                            "typescript":  "^5.7.2",
+                            "vitest":  "^2.1.8"
+                        }
 }

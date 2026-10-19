@@ -18,6 +18,28 @@ export default {
   /** 状态气泡:没有专门描述的工具调用 */
   busy: '在忙',
 
+  /** 账号与余额:左键点它时的一行,和右键菜单里点开后的完整信息 */
+  account: {
+    title: '账号与余额',
+    peekTitle: '今日与余额',
+    today: '今天',
+    output: '输出',
+    input: '未缓存输入',
+    cacheRead: '缓存命中',
+    cacheWrite: '缓存写入',
+    total: '合计',
+    requests: (count: number, sessions: number) => `${count} 次请求 · ${sessions} 个会话`,
+    noToday: (reason: string) => `今天用量读不到:${reason}`,
+    recharge: '充值余额',
+    balance: '余额',
+    bonus: '赠金',
+    balanceEmpty: '余额为空',
+    noBalance: (reason: string) => `余额未拿到:${reason}`,
+    bridgeShort: '桥接插件未装',
+    bridgeHint: 'DSH 侧的账号桥接插件还没发布数据,装好之后重启 DSH 就能看到。',
+    age: (minutes: number) => `${minutes} 分钟前从 DSH 读到`,
+  },
+
   /** 语音输入:菜单里麦克风按钮的状态、引导和设置页的说明 */
   voice: {
     starting: '识别服务启动中',
@@ -334,5 +356,27 @@ export default {
     offline: '尚未连接',
     notSent: '发送失败',
     tooLate: '该消息已送达，无法撤回。',
+  },
+
+  /** 任务进度气泡:关键节点的一句话、完成汇报,以及控制台里这一段的配置项(写法同上面的 config 组) */
+  progress: {
+    subagentDone: (label: string) => `子代理「${label}」做完了子任务`,
+    turnDone: (session: string, turns: number) => `「${session}」第 ${turns} 轮做完了`,
+    todoDone: (session: string, latest: string, done: number, total: number) =>
+      (latest ? `「${session}」完成待办：${latest}（${done}/${total}）` : `「${session}」待办完成 ${done}/${total}`),
+    goalMoved: (session: string, to: string) => `「${session}」的目标状态变成 ${to}`,
+    more: (n: number) => `…还有 ${n} 项`,
+    completedTitle: (session: string) => `「${session}」做完了`,
+    completedLine: (turns: number, tokens: string) => `${turns} 轮 · ${tokens}`,
+    completedGoal: (objective: string) => `目标：${objective}`,
+    nothingGoal: '没有设目标',
+    /** 控制台的配置项 */
+    config: {
+      enabled: { title: '任务进度气泡', description: '会话里做完一轮、完成待办或子代理做完子任务时，弹一条气泡告诉你。' },
+      interval: { title: '进度轮询间隔', suffix: '秒', description: '隔多久看一次 DSH 的会话进度；太短会反复读同一批文件。' },
+      coalesce: { title: '进度气泡最短间隔', suffix: '秒', description: '两次进度气泡之间至少隔这么久，连着发生的几件事合成一条说。' },
+      idle: { title: '算做完的安静时长', suffix: '秒', description: '会话安静这么久才算「停了」，也才认定一轮做完了。' },
+      report: { title: '完成时单独汇报', description: '一轮做完时另弹一条汇报，带上轮数、用量和目标。' },
+    },
   },
 };

@@ -44,6 +44,7 @@ export default {
   'action.soundOn': 'Sounds: on · click to turn off',
   'action.soundOff': 'Sounds: off · click to turn on',
   'action.dress': 'Dress up',
+  'action.account': 'Account & balance',
   'action.hide': 'Hide the pet (show it again from the tray icon)',
   'menu.cancel': 'Cancel',
   'menu.resume': 'Resume',

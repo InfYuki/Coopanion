@@ -21,6 +21,28 @@ const en: PetText = {
   /** Status bubble: a tool call without its own description. */
   busy: 'Working',
 
+  /** Account and balance: the line a left click shows, and the full card the menu opens. */
+  account: {
+    title: 'Account & balance',
+    peekTitle: 'Today & balance',
+    today: 'Today',
+    output: 'Output',
+    input: 'Input (uncached)',
+    cacheRead: 'Cache read',
+    cacheWrite: 'Cache write',
+    total: 'Total',
+    requests: (count: number, sessions: number) => `${count} requests · ${sessions} sessions`,
+    noToday: (reason: string) => `Today's usage is unreadable: ${reason}`,
+    recharge: 'Balance',
+    balance: 'Balance',
+    bonus: 'Granted credit',
+    balanceEmpty: 'No balance',
+    noBalance: (reason: string) => `Balance unavailable: ${reason}`,
+    bridgeShort: 'bridge not installed',
+    bridgeHint: 'The DSH account bridge has not published yet; install it and restart DSH.',
+    age: (minutes: number) => `read from DSH ${minutes} min ago`,
+  },
+
   /** Voice input: the microphone button's state in the menu, and the notes in the introduction and on the settings page. */
   voice: {
     starting: 'Speech recognition is starting',
@@ -336,6 +358,28 @@ const en: PetText = {
     offline: 'Not connected yet',
     notSent: 'Could not send it',
     tooLate: 'That one has already been delivered and cannot be taken back.',
+  },
+
+  /** The task progress bubble: one line for each milestone, the completion report, and this section's console settings (written as the config group above). */
+  progress: {
+    subagentDone: (label: string) => `The subagent "${label}" finished its subtask`,
+    turnDone: (session: string, turns: number) => `"${session}" finished turn ${turns}`,
+    todoDone: (session: string, latest: string, done: number, total: number) =>
+      (latest ? `"${session}" finished a to-do: ${latest} (${done}/${total})` : `"${session}" finished ${done}/${total} to-dos`),
+    goalMoved: (session: string, to: string) => `The goal of "${session}" moved to ${to}`,
+    more: (n: number) => `…and ${n} more`,
+    completedTitle: (session: string) => `"${session}" is done`,
+    completedLine: (turns: number, tokens: string) => `${turns} turns · ${tokens}`,
+    completedGoal: (objective: string) => `Goal: ${objective}`,
+    nothingGoal: 'No goal was set',
+    /** The console settings. */
+    config: {
+      enabled: { title: 'Task progress bubble', description: 'Says a bubble when a session finishes a turn, a to-do, or a subagent finishes its subtask.' },
+      interval: { title: 'Progress polling interval', suffix: 's', description: 'How often the sessions DSH runs are looked at; too short reads the same files over and over.' },
+      coalesce: { title: 'Shortest gap between bubbles', suffix: 's', description: 'Progress bubbles stay at least this far apart, so things happening in a row are said as one.' },
+      idle: { title: 'Quiet before a session counts as stopped', suffix: 's', description: 'A session must be quiet this long to count as stopped, and a turn as finished.' },
+      report: { title: 'Report each completion', description: 'A turn that finishes gets its own bubble, with turns, usage and the goal.' },
+    },
   },
 };
 

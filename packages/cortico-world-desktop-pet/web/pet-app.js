@@ -1110,6 +1110,12 @@ const ACTIONS = {
       else window.open('/dress', '_blank');
     },
   },
+  account: {
+    icon: () => ICONS.wallet,
+    state: () => t('action.account'),
+    // the World answers in a bubble out of what DSH has on disk; nothing here reaches the bot
+    run: () => send({ t: 'account', full: true }),
+  },
 };
 const available = (id) => ACTIONS[id] && (ACTIONS[id].available?.() ?? true);
 
@@ -1415,14 +1421,29 @@ host?.onCursor?.((p) => {
 });
 /** A press that began on the body and has not been let go of: the window keeps the mouse meanwhile. */
 let pressing = false;
+/** Where that press began, so a click can be told from a drag. */
+let pressAt = null;
 stage.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
   closeMenu();
   const p = { x: e.clientX, y: e.clientY, t: e.timeStamp };
   body?.pointer('down', p);
+  pressAt = body?.hit(p) ? { x: p.x, y: p.y, t: performance.now() } : null;
   if (body?.hit(p)) { pressing = true; stage.setPointerCapture(e.pointerId); e.preventDefault(); }
 });
-const up = (e) => { pressing = false; body?.pointer('up', { x: e?.clientX ?? lastPointer.x, y: e?.clientY ?? lastPointer.y, t: e?.timeStamp ?? performance.now() }); stage.style.cursor = ''; };
+/** A press this quick, this still and not a drag is a click: it also asks for today's usage and the balance. */
+const CLICK_MS = 700, CLICK_SLOP = 6;
+const up = (e) => {
+  pressing = false;
+  const at = pressAt;
+  pressAt = null;
+  body?.pointer('up', { x: e?.clientX ?? lastPointer.x, y: e?.clientY ?? lastPointer.y, t: e?.timeStamp ?? performance.now() });
+  stage.style.cursor = '';
+  if (!at || !e || at()?.mode === 'drag') return;
+  if (performance.now() - at.t > CLICK_MS) return;
+  if (Math.hypot(e.clientX - at.x, e.clientY - at.y) > CLICK_SLOP) return;
+  send({ t: 'account' });
+};
 /**
  * Most milliseconds a drop on another display waits for the page to take the window's new size
  * (within a pixel: fractional scales round it). The size normally arrives a frame or two after

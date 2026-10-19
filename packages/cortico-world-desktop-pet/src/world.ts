@@ -29,12 +29,27 @@ import { nowIso, shortTime } from 'cortico/core/util.ts';
 import type { Language } from 'cortico/core/language.ts';
 import type { DeepPartial } from 'cortico/world.ts';
 import {
-  DESKTOP_PET_ID, MAX_HOVER_BUTTONS, PET_ACTIONS, SELF_KEYS, TOUCH_KINDS, USER_MAX, asrEngineFor, desktopPetConfigGroups, directSettings,
+  DESKTOP_PET_DEFAULTS, DESKTOP_PET_ID, MAX_HOVER_BUTTONS, PET_ACTIONS, SELF_KEYS, TOUCH_KINDS, USER_MAX, asrEngineFor, desktopPetConfigGroups, directSettings,
   hoverButtonList, selfAdjustMode, touchWakes,
   type AsrEngine, type DesktopPetConfigSection, type MicMode, type PetSkin, type PetTheme, type RoamMode, type SelfKey,
 } from './config.ts';
 import { capFor, cutChars, petText, type PetText } from './i18n/index.ts';
+import { formatCompletion, formatMilestones } from './progress.ts';
 import { PetServer, type PageMessage } from './server.ts';
+import {
+  defaultBridgeDir,
+  defaultCacheDir,
+  defaultSessionsDir,
+  detectMilestones,
+  emptyMilestoneState,
+  humanMoney,
+  humanTokens,
+  readAccount,
+  readSessions,
+  readTodayUsage,
+  type AccountSnapshot,
+  type TodayUsageResult,
+} from 'cortico-world-dsh-monitor';
 import { StatusTracker, type DescribeTool } from './status.ts';
 import { WindowHost, resolveHostCommand } from './window-host.ts';
 import { RuntimeStore, type ModelSpec } from './runtime/store.ts';
@@ -94,6 +109,17 @@ const IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 /** How often config edits from the console reach the pages: short enough that the size slider moves the pet with it. */
 const PREFS_SYNC_MS = 150;
+/**
+ * A progress bubble's first look waits this long: DSH writes a run's session projection a moment in, and
+ * looking at once would only re-read the sessions already there.
+ */
+const PROGRESS_WARMUP_MS = 20_000;
+/** Sessions one progress look reads: the newest ones, so a big cache does not become a big read. */
+const PROGRESS_SESSIONS = 40;
+/** Completion reports one look may say; more than this in a row would fill the bubble. */
+const PROGRESS_REPORTS = 2;
+/** Lines one progress bubble shows (`formatMilestones` folds the rest into `more`). */
+const PROGRESS_LINES = 3;
 /** Talk-key polling interval: well under the shortest key tap. */
 const HOTKEY_POLL_MS = 30;
 /**
@@ -340,6 +366,15 @@ export class DesktopPetWorld implements World {
   private stampDay = '';
   private prefsKey = '';
   private prefsTimer: NodeJS.Timeout | null = null;
+  /** The progress bubble's first look (`PROGRESS_WARMUP_MS`), then `progressTimer` keeps it going. */
+  private progressWarmup: NodeJS.Timeout | null = null;
+  private progressTimer: ReturnType<typeof setInterval> | null = null;
+  /** What `detectMilestones` saw last look: the milestones already said are not said again. */
+  private milestoneState = emptyMilestoneState();
+  /** When a progress bubble was last said: two of them stay `progress.coalesceSeconds` apart. */
+  private lastProgressAt = 0;
+  /** The first progress look only builds the baseline: what was already settled before the pet started is not news. */
+  private progressPrimed = false;
   /** Where the pet window last said the pet stands, measured as `petX` is; written by `savePosition` on stop. */
   private standX: number | null = null;
   private readonly voiceSockets = new Set<WorldStreamSocket>();
@@ -607,6 +642,7 @@ export class DesktopPetWorld implements World {
     await this.syncHotkey();
     this.prefsKey = this.prefsSignature();
     this.prefsTimer = setInterval(() => this.syncPrefs(), PREFS_SYNC_MS);
+    this.startProgress();
   }
 
   async stop(): Promise<void> {
@@ -615,6 +651,10 @@ export class DesktopPetWorld implements World {
     this.quiet = null;
     if (this.prefsTimer) clearInterval(this.prefsTimer);
     this.prefsTimer = null;
+    if (this.progressWarmup) clearTimeout(this.progressWarmup);
+    this.progressWarmup = null;
+    if (this.progressTimer) clearInterval(this.progressTimer);
+    this.progressTimer = null;
     this.savePosition();
     await this.importer?.cancel();
     if (this.packTimer) clearTimeout(this.packTimer);
@@ -647,6 +687,99 @@ export class DesktopPetWorld implements World {
   onTurnEnded(): void {
     this.touchWoke = false;
     this.cua.onTurnEnded();
+  }
+
+  /* ---------- progress ---------- */
+
+  /**
+   * Starts the progress bubble's clock: one look after PROGRESS_WARMUP_MS, then one every
+   * `progress.intervalSeconds`.
+   *
+   * The clock runs whether or not `progress.enabled` is on, so switching it on in the console takes
+   * effect at the next look: `tickProgress` reads the switch each time and says nothing while it is
+   * off. `intervalSeconds` is the exception — the interval is fixed when the clock is set up, so a
+   * new one takes effect at the next start, not on the next look.
+   */
+  private startProgress(): void {
+    const p = this.progressCfg();
+    const every = Math.max(1, p.intervalSeconds) * 1000;
+    this.progressPrimed = false;
+    this.progressWarmup = setTimeout(() => {
+      this.progressWarmup = null;
+      void this.tickProgress();
+      this.progressTimer = setInterval(() => void this.tickProgress(), every);
+    }, PROGRESS_WARMUP_MS);
+  }
+
+  /** `cfg.progress`, with the defaults for a config written before this section existed (or written half). */
+  private progressCfg(): DesktopPetConfigSection['progress'] {
+    const d = DESKTOP_PET_DEFAULTS.progress;
+    const p = this.cfg.progress as Partial<DesktopPetConfigSection['progress']> | undefined;
+    const num = (value: number | undefined, min: number, fallback: number) =>
+      (typeof value === 'number' && Number.isFinite(value) && value >= min ? value : fallback);
+    return {
+      enabled: typeof p?.enabled === 'boolean' ? p.enabled : d.enabled,
+      intervalSeconds: num(p?.intervalSeconds, 1, d.intervalSeconds),
+      coalesceSeconds: num(p?.coalesceSeconds, 0, d.coalesceSeconds),
+      idleSeconds: num(p?.idleSeconds, 0, d.idleSeconds),
+      reportCompletion: typeof p?.reportCompletion === 'boolean' ? p.reportCompletion : d.reportCompletion,
+    };
+  }
+
+  /** Says one progress line; with no page connected there is nothing to say it to, so it is dropped quietly. The record keeps it in the chat history. */
+  private sayProgress(text: string): void {
+    if (!text) return;
+    if (!this.server.sendPet({ t: 'say', id: nextId('s'), beats: [{ text }] })) return;
+    void this.record({ kind: 'say', beats: [{ text }] }, text);
+  }
+
+  /**
+   * Reads the sessions once and says what is new: a completion report first (at most PROGRESS_REPORTS),
+   * then the milestones as one bubble, no sooner than `progress.coalesceSeconds` after the last one.
+   *
+   * Never throws: a cache that cannot be read or a bubble that cannot be sent is one warning line.
+   *
+   * The first look of a start only builds the baseline (`milestoneState`) and says nothing: sessions
+   * that settled before the pet started are history, not news.
+   *
+   * Milestones folded into `more(n)` or held back by that gap are not said later: they are already in
+   * `milestoneState.reported`, and the next look will not hand them out again. That is the point — the
+   * bubble is a nudge, not a ledger.
+   *
+   * Before any of that, a gate: nothing to say to a closed page, nothing worth queueing behind lines
+   * still being typed (the page plays `say`s one at a time, a 10-character line takes about 2.8 s), and
+   * nothing while the bot is in a run. The look then does not read the cache either, so the milestones
+   * it would have found are still there for the next look — nothing is lost by skipping, only delayed.
+   */
+  private async tickProgress(): Promise<void> {
+    try {
+      // `phase` is null until `onRunPhase` first hears of a phase change (Core only tells a change),
+      // and null therefore means "no run seen yet", not "busy".
+      if (!this.server.petConnected) return;
+      if (Date.now() < this.busyUntil) return;
+      if (this.phase !== null && this.phase.state !== 'idle') return;
+      const p = this.progressCfg();
+      if (!p.enabled) return;
+      const sessions = readSessions(defaultCacheDir()).sessions.slice(0, PROGRESS_SESSIONS);
+      if (sessions.length === 0) return;
+      const { state, milestones, completions } = detectMilestones(sessions, this.milestoneState, { nowMs: Date.now(), idleMs: p.idleSeconds * 1000 });
+      this.milestoneState = state;
+      // 首拍只建基线：历史里已经结算的会话不该被当成「刚完成」念一遍
+      if (!this.progressPrimed) {
+        this.progressPrimed = true;
+        return;
+      }
+      if (p.reportCompletion) {
+        for (const c of completions.slice(0, PROGRESS_REPORTS)) this.sayProgress(formatCompletion(c, this.ui.progress, humanTokens));
+      }
+      if (milestones.length === 0) return;
+      const now = Date.now();
+      if (now - this.lastProgressAt < p.coalesceSeconds * 1000) return;
+      this.lastProgressAt = now;
+      this.sayProgress(formatMilestones(milestones, this.ui.progress, PROGRESS_LINES));
+    } catch (err) {
+      this.log?.warn(`任务进度没能读出来:${(err as Error).message}`);
+    }
   }
 
   /** Computer use is on and this system runs it. */
@@ -1056,11 +1189,79 @@ export class DesktopPetWorld implements World {
       }
       case 'commit': return this.commitSpeech();
       case 'cancel': return this.cancelSpeech();
+      // the person clicked the pet, or picked 账号与余额 from its menu
+      case 'account': return this.showAccount(msg.full === true);
     }
   }
 
-  private onControl(action: string): void {
-    const c = this.opts.controls;
+  /**
+   * 账号与余额：人在桌宠上问的，不走对话，直接读 DSH 的两个文件答在气泡里。
+   *
+   * 只读：今日用量来自会话事件日志（按本地日期现算），余额来自 DSH 侧桥接插件发布的
+   * `account.json`。拿不到就说拿不到，不猜数字。
+   */
+  private showAccount(full: boolean): void {
+    const today = readTodayUsage(defaultSessionsDir(), Date.now());
+    const account = readAccount(defaultBridgeDir());
+    const lines = full ? this.accountCard(today, account) : this.accountPeek(today, account);
+    this.dialog({ text: lines.join('\n') });
+  }
+
+  /** 左键点一下看到的两行。 */
+  private accountPeek(today: TodayUsageResult, account: AccountSnapshot | null): string[] {
+    const t = this.ui.account;
+    const line = (label: string, value: string): string => `${label}:${value}`;
+    const usage = today.ok && today.usage
+      ? `${t.output} ${humanTokens(today.usage.output)} · ${t.total} ${humanTokens(today.usage.total)}(${t.requests(today.usage.requests, today.usage.sessions)})`
+      : today.reason ?? '—';
+    return [
+      line(t.today, usage),
+      line(t.balance, this.balanceLine(account)),
+    ];
+  }
+
+  /** 右键菜单点开的完整一页。 */
+  private accountCard(today: TodayUsageResult, account: AccountSnapshot | null): string[] {
+    const t = this.ui.account;
+    const out: string[] = [t.title, ''];
+    if (today.ok && today.usage) {
+      const u = today.usage;
+      out.push(`${t.today} ${u.date}`);
+      out.push(`${t.output} ${humanTokens(u.output)}`);
+      out.push(`${t.input} ${humanTokens(u.input)}`);
+      out.push(`${t.cacheRead} ${humanTokens(u.cacheRead)}`);
+      if (u.cacheWrite) out.push(`${t.cacheWrite} ${humanTokens(u.cacheWrite)}`);
+      out.push(`${t.total} ${humanTokens(u.total)}(${t.requests(u.requests, u.sessions)})`);
+    } else {
+      out.push(t.noToday(today.reason ?? '—'));
+    }
+    out.push('');
+    if (!account) {
+      out.push(t.bridgeHint);
+    } else if (account.status === 'ready') {
+      const name = account.profile?.name ? `(${account.profile.name})` : '';
+      for (const w of account.wallets) out.push(`${t.recharge} ${humanMoney(w)}${name}`);
+      if (!account.wallets.length) out.push(t.balanceEmpty);
+      for (const w of account.bonusWallets) out.push(`${t.bonus} ${humanMoney(w)}`);
+      out.push(t.age(Math.max(0, Math.round((Date.now() - account.at) / 60_000))));
+    } else if (account.status === 'signed-out') {
+      out.push(t.noBalance(account.status));
+    } else {
+      out.push(t.noBalance(account.error ?? account.status));
+    }
+    return out;
+  }
+
+  /** 一行余额：有就说金额，没有就说原因。 */
+  private balanceLine(account: AccountSnapshot | null): string {
+    const t = this.ui.account;
+    if (!account) return t.noBalance(t.bridgeShort);
+    if (account.status !== 'ready') return t.noBalance(account.error ?? account.status);
+    const parts = [...account.wallets, ...account.bonusWallets].map(humanMoney);
+    return parts.length ? parts.join(' + ') : t.balanceEmpty;
+  }
+
+  private onControl(action: string): void {    const c = this.opts.controls;
     if (!c) return;
     if (action === 'pause' || action === 'resume') c.setPaused?.(action === 'pause');
     else if (action === 'settings') c.openSettings?.();

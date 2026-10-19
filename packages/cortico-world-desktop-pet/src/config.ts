@@ -167,6 +167,19 @@ export interface DesktopPetConfigSection extends WorldSection {
   doubleClickChat: boolean;
   /** Show the current activity above the pet, including file names. */
   statusBubble: boolean;
+  /** Task progress bubbles: a line when a session hits a milestone, and a report when it finishes (src/progress.ts). */
+  progress: {
+    /** 是否在关键节点弹气泡提醒进度。 */
+    enabled: boolean;
+    /** 轮询间隔（秒）。 */
+    intervalSeconds: number;
+    /** 两次进度气泡之间至少隔多久（秒），用来合并连续事件。 */
+    coalesceSeconds: number;
+    /** 会话安静多久算「停了」（秒）。 */
+    idleSeconds: number;
+    /** 完成时是否单独弹一条汇报。 */
+    reportCompletion: boolean;
+  };
   /** How far the bot may change its own looks and habits (src/self.ts); read through `selfAdjustMode`. */
   selfAdjust: SelfAdjust;
   /** Under `custom`: per item, true = changed at once, false = asked first. */
@@ -226,6 +239,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   hoverButtons: 'chat,voice',
   doubleClickChat: false,
   statusBubble: true,
+  progress: { enabled: true, intervalSeconds: 20, coalesceSeconds: 15, idleSeconds: 90, reportCompletion: true },
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {
@@ -251,6 +265,8 @@ const K = `worlds.${DESKTOP_PET_ID}`;
 /** The console's config groups: the pet's own, its sounds and voice input, titled in `language` (the console's). */
 export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[] {
   const c = petText(language).config;
+  // 进度气泡的配置项与气泡文字同住一个顶层键：别的语言没有这一组时整组读 zh / en，不会缺键
+  const p = petText(language).progress.config;
   const userMax = capFor(USER_MAX, language);
   const pet: ConfigGroup = {
     id: `world:${DESKTOP_PET_ID}`,
@@ -266,6 +282,11 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
         [`${K}.hoverButtons`]: { type: 'string', title: c.hoverButtons.title, description: c.hoverButtons.description(MAX_HOVER_BUTTONS, PET_ACTIONS.join(', ')), 'x-hot': true },
         [`${K}.doubleClickChat`]: { type: 'boolean', title: c.doubleClickChat.title, description: c.doubleClickChat.description, 'x-hot': true },
         [`${K}.statusBubble`]: { type: 'boolean', title: c.statusBubble.title, description: c.statusBubble.description, 'x-hot': true },
+        [`${K}.progress.enabled`]: { type: 'boolean', title: p.enabled.title, description: p.enabled.description, 'x-hot': true },
+        [`${K}.progress.intervalSeconds`]: { type: 'integer', title: p.interval.title, minimum: 5, maximum: 600, 'x-suffix': p.interval.suffix, description: p.interval.description, 'x-hot': true },
+        [`${K}.progress.coalesceSeconds`]: { type: 'integer', title: p.coalesce.title, minimum: 0, maximum: 600, 'x-suffix': p.coalesce.suffix, description: p.coalesce.description, 'x-hot': true },
+        [`${K}.progress.idleSeconds`]: { type: 'integer', title: p.idle.title, minimum: 10, maximum: 3600, 'x-suffix': p.idle.suffix, description: p.idle.description, 'x-hot': true },
+        [`${K}.progress.reportCompletion`]: { type: 'boolean', title: p.report.title, description: p.report.description, 'x-hot': true },
         [`${K}.selfAdjust`]: { type: 'string', title: c.selfAdjust.title, enum: [...SELF_ADJUST], description: c.selfAdjust.description, 'x-hot': true },
         [`${K}.window.enabled`]: { type: 'boolean', title: c.windowEnabled.title, 'x-hot': false },
         [`${K}.window.scale`]: { type: 'number', title: c.scale.title, minimum: SCALE_MIN, maximum: SCALE_MAX, multipleOf: .05, 'x-hot': true },

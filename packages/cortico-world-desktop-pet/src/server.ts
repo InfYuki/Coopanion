@@ -51,7 +51,7 @@ const PORT_ATTEMPTS = 10;
 /** The pages' own CSP. */
 const PAGE_CSP = "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; img-src 'self' data:; media-src 'self' blob:; worker-src 'self' blob:; frame-ancestors 'self' http://127.0.0.1:* http://localhost:*";
 /** What a watching pet page may still send: input that is the person's whichever page it came from. */
-const WATCHER_MESSAGES = new Set(['text', 'prefs', 'control']);
+const WATCHER_MESSAGES = new Set(['text', 'prefs', 'control', 'account']);
 
 export type PageMessage = Record<string, unknown> & { t: string };
 

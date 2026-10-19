@@ -1,0 +1,19 @@
+{
+  "name": "coopanion-account-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DeepSeek Harness Host plugin: publishes the signed-in account's wallet balance to a local JSON file so Coopanion can show it without ever touching a credential.",
+  "license": "AGPL-3.0-or-later",
+  "main": "./index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

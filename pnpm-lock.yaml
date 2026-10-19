@@ -14,6 +14,9 @@ importers:
       cortico-world-desktop-pet:
         specifier: workspace:*
         version: link:packages/cortico-world-desktop-pet
+      cortico-world-dsh-monitor:
+        specifier: workspace:*
+        version: link:packages/cortico-world-dsh-monitor
       electron-updater:
         specifier: ^6.8.9
         version: 6.8.9(supports-color@7.2.0)
@@ -105,6 +108,9 @@ importers:
 
   packages/cortico-world-desktop-pet:
     dependencies:
+      cortico-world-dsh-monitor:
+        specifier: workspace:*
+        version: link:../cortico-world-dsh-monitor
       fflate:
         specifier: 0.8.3
         version: 0.8.3
@@ -136,6 +142,21 @@ importers:
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.15
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.4)(jsdom@30.1.0(@noble/hashes@2.4.0))(lightningcss@1.32.0)(supports-color@7.2.0)
+
+  packages/cortico-world-dsh-monitor:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.4
       tsx:
         specifier: ^4.19.2
         version: 4.23.15

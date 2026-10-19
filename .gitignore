@@ -4,3 +4,7 @@ dist/
 scratch/
 *.log
 promo/assets/bgm.mp3
+
+# local development environments (conda env, local pnpm), never committed
+envs/
+.tools/

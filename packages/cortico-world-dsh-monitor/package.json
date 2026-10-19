@@ -1,0 +1,51 @@
+{
+  "name": "cortico-world-dsh-monitor",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Cortico World: watches DeepSeek Harness's session projection cache and reports task progress and token usage to the bot. Read-only.",
+  "author": "Pal AI Lab",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pal-AI-Lab/Coopanion.git",
+    "directory": "packages/cortico-world-dsh-monitor"
+  },
+  "keywords": [
+    "cortico-world",
+    "cortico",
+    "dsh",
+    "deepseek-harness",
+    "monitor",
+    "tokens"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.28.6",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "cortico": {
+    "kind": "world",
+    "api": 6,
+    "describe": "describe.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "describe.json"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

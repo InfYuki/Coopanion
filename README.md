@@ -50,6 +50,15 @@ Coopanion is a desktop pet. **Coo** lives on the bottom edge of your screen: it 
 
 What changed in each version is in [Releases](https://github.com/Pal-AI-Lab/Coopanion/releases).
 
+### DSH integration
+
+With DeepSeek Harness (DSH) on the same machine, Coo reads what it writes locally and tells you how a task is going and what today has cost so far, without a model request and without a credential.
+
+| Feature | What it does | Details |
+|---|---|---|
+| Task progress bubbles | Pops a bubble when a DSH subagent, turn, todo or goal finishes, with no model turn. | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
+| Today's usage & account balance | Click the pet for today's tokens and balance; the menu shows the full page. | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
+
 ## Install
 
 You need one of:

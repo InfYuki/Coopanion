@@ -50,6 +50,15 @@ Coopanion 是一个桌宠。桌宠 **Coo** 待在屏幕底边，可以用气泡�
 
 每个版本的改动见 [Releases](https://github.com/Pal-AI-Lab/Coopanion/releases)。
 
+### DSH 集成
+
+同一台机器上装着 DeepSeek Harness（DSH）时，Coo 会读它写在本地的东西，把任务进度和今天的花销说出来：不经过模型，也不需要凭据。
+
+| 功能 | 做什么 | 说明 |
+|---|---|---|
+| 任务进度气泡 | 子代理、会话、待办或目标做完时弹一条气泡，不产生对话轮次。 | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
+| 今日用量与账户余额 | 左键点一下看今天的 token 和余额，右键菜单里打开完整一页。 | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
+
 ## 安装
 
 需要以下系统之一：

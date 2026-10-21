@@ -73,6 +73,20 @@ Left-click Coo for the combined DSH/Codex usage preview. Account details open th
 
 The DSH reader uses local files and receives balance snapshots from its bridge; credentials stay in DSH. Codex account queries use the installed app-server's existing sign-in and can access the network. Other devices and remote sessions absent from local logs are outside local task coverage. Configure **Codex monitoring** in settings. Source-specific details: [DSH monitoring](docs/DSH-MONITOR.md) and [Codex monitoring](docs/CODEX-MONITOR.md).
 
+### Coo-GPT screenshots
+
+| Desktop observation and a quip | A quip about terminal activity |
+|---|---|
+| <img src="image/README/coo-gpt/1.jpg" alt="Young Fat Dragon making a brief quip beside desktop windows" width="360"> | <img src="image/README/coo-gpt/5.jpg" alt="Young Fat Dragon making a brief quip about benchmark logs" width="360"> |
+
+| Sitting pose | Overall pet scale in Habits |
+|---|---|
+| <img src="image/README/coo-gpt/3.jpg" alt="Young Fat Dragon in a sitting pose" width="360"> | <img src="image/README/coo-gpt/4.jpg" alt="Young Fat Dragon with the overall size set to 590% in Habits" width="480"> |
+
+Working beside terminal logs:
+
+<p align="center"><img src="image/README/coo-gpt/2.jpg" alt="Young Fat Dragon and a screen-observation quip over terminal logs" width="960"></p>
+
 ## Install
 
 You need one of:

@@ -73,6 +73,20 @@ Coopanion 是一个桌宠。桌宠 **Coo** 待在屏幕底边，可以用气泡�
 
 DSH 读取本地文件，余额由桥接插件发布，凭据留在 DSH 中。Codex 账户查询使用已安装 app-server 的现有登录状态，可能访问网络。本机日志中没有的远端会话及其他设备不在本机任务监控范围内。Codex 可在设置的「Codex 监控」中配置。各数据源细节见 [DSH 监控说明](docs/DSH-MONITOR.md) 和 [Codex 监控说明](docs/CODEX-MONITOR.md)。
 
+### Coo-GPT 效果图
+
+| 桌面观察与调侃 | 终端场景调侃 |
+|---|---|
+| <img src="image/README/coo-gpt/1.jpg" alt="大肥龙在桌面窗口旁表达简短调侃" width="360"> | <img src="image/README/coo-gpt/5.jpg" alt="大肥龙对 benchmark 日志表达简短调侃" width="360"> |
+
+| 坐姿展示 | 习惯页中的桌宠整体缩放 |
+|---|---|
+| <img src="image/README/coo-gpt/3.jpg" alt="大肥龙坐姿效果" width="360"> | <img src="image/README/coo-gpt/4.jpg" alt="习惯页整体大小设置为 590% 时的大肥龙效果" width="480"> |
+
+终端工作场景：
+
+<p align="center"><img src="image/README/coo-gpt/2.jpg" alt="终端日志场景中的大肥龙与屏幕观察调侃气泡" width="960"></p>
+
 ## 安装
 
 需要以下系统之一：

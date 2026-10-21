@@ -17,6 +17,7 @@
  * promise rejects. Either way the frame is gone.
  */
 import { language, t } from './i18n.js';
+import { customValue } from './figure-axis.js';
 
 /** A pack that has not drawn its first frame by then is taken as broken: its scripts or textures did not load. */
 const READY_MS = 20_000;
@@ -108,7 +109,7 @@ export function touchGate() {
 export function knownScheme(pack, scheme) {
   if (pack.presets.some((p) => p.id === scheme)) return scheme;
   const parts = String(scheme ?? '').split('-');
-  return pack.axes.map((a, i) => (a.options.some((o) => o.id === parts[i]) ? parts[i] : a.options[0].id)).join('-');
+  return pack.axes.map((a, i) => (a.options.some((o) => o.id === parts[i]) || customValue(a, parts[i]) !== null ? parts[i] : a.options[0].id)).join('-');
 }
 
 /**

@@ -224,7 +224,7 @@ Windows 上经 koffi 轮询 Win32 `GetAsyncKeyState` 读取;macOS 上轮询 Core
 | `name`、`about` | 按语言的名字;`about` 写这个身体长什么样,原样放进 bot 的环境提示词 |
 | `entry`、`export` | 模块路径和它导出的工厂函数 |
 | `model` | 交给工厂的 JSON(`opts.model`),可省 |
-| `axes` | 打扮的维度,每维一组选项(`id`、`name`、`thumb`);装扮页每维一行 |
+| `axes` | 打扮的维度,每维一组选项(`id`、`name`、`thumb`);装扮页每维一行。可选 `custom: { name, min, max, default, unit }` 增加整数输入，范围为非负安全整数，保存为该轴的 `n<整数>` 选项；工厂负责解释这个值。普通选项可用 `value` 指定对应整数，用于输入框初始显示；有 `custom` 的轴不能使用 `n<整数>` 作为普通选项 id |
 | `presets` | 维度组合的命名,可带 `accent` 和设置窗口配色 `console` |
 | `vocab` | 这个身体做的全部表情和动作,也就是它在场时 bot 的整张词表:每个词 `id`、`kind`(`expression` / `motion`)、`names`(按语言的名字列表)、`about`(它做这个词的样子)、`seconds`(连着做时等多久再做下一个),`lasting: true` 表示保持到下一个动作;`kind` 是这一版不认识的值时跳过那个词 |
 | `sounds` | 包自带的音频:名字 → `{ file, kind, volume }`,文件是包里的 `.ogg` `.mp3` `.wav`,`kind` 是 `move` `touch` `face` `snore` 之一;不存在的文件、这一版不认识的 `kind` 或文件类型,在扫描时记一条问题,那个声音不响 |

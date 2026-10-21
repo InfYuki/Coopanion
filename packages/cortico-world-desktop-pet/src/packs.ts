@@ -53,7 +53,15 @@ export type Names = Record<string, string>;
 export interface FigureAxis {
   id: string;
   name: Names;
-  options: Array<{ id: string; name: Names; thumb?: string; accent?: string }>;
+  options: Array<{ id: string; name: Names; thumb?: string; accent?: string; value?: number }>;
+  /** Optional integer input, encoded as `n<value>` in the scheme. */
+  custom?: { name: Names; min: number; max: number; default: number; unit: string };
+}
+
+export function customAxisValue(axis: FigureAxis, id: string): number | null {
+  if (!axis.custom || !/^n[0-9]+$/.test(id)) return null;
+  const value = Number(id.slice(1));
+  return Number.isSafeInteger(value) && value >= axis.custom.min && value <= axis.custom.max ? value : null;
 }
 
 /** The settings window's colours for a preset, see core/console-theme.ts in Coopanion. */
@@ -209,9 +217,18 @@ export function readManifest(dir: string, builtin = false, skipped: string[] = [
     for (const o of a.options as Array<Record<string, unknown>>) {
       const on = namesOf(o?.name);
       if (typeof o?.id !== 'string' || !OPTION_ID.test(o.id) || !on || (o.thumb !== undefined && !inside(o.thumb))) return t.badOption(a.id, JSON.stringify(o?.id));
-      options.push({ id: o.id, name: on, ...(o.thumb ? { thumb: o.thumb as string } : {}), ...(typeof o.accent === 'string' ? { accent: o.accent } : {}) });
+      options.push({ id: o.id, name: on, ...(o.thumb ? { thumb: o.thumb as string } : {}), ...(typeof o.accent === 'string' ? { accent: o.accent } : {}), ...(Number.isSafeInteger(o.value) ? { value: o.value as number } : {}) });
     }
-    axes.push({ id: a.id, name: an, options });
+    const axis: FigureAxis = { id: a.id, name: an, options };
+    if (a.custom !== undefined) {
+      const c = a.custom as FigureAxis['custom'];
+      const name = namesOf(c?.name);
+      if (!c || !name || !Number.isSafeInteger(c.min) || !Number.isSafeInteger(c.max) || !Number.isSafeInteger(c.default)
+        || c.min < 0 || c.max < c.min || c.default < c.min || c.default > c.max || typeof c.unit !== 'string'
+        || options.some((o) => /^n[0-9]+$/.test(o.id))) return t.badAxis(JSON.stringify(a.id));
+      axis.custom = { name, min: c.min, max: c.max, default: c.default, unit: c.unit };
+    }
+    axes.push(axis);
   }
   const presets: FigurePreset[] = [];
   for (const p of Array.isArray(raw.presets) ? raw.presets as Array<Record<string, unknown>> : []) {

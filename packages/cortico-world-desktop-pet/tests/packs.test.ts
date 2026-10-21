@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { BUILTIN_PACKS, figurePacks, lookOf, lookPatch, readManifest, scanPacks } from '../src/packs.ts';
+import { pickWords } from '../src/self.ts';
 
 function pack(manifest: Record<string, unknown>, files: string[] = []): string {
   const dir = mkdtempSync(join(tmpdir(), 'pack-'));
@@ -15,6 +16,20 @@ const word = { id: 'beep', kind: 'motion', names: { zh: ['哔'] }, about: { zh: 
 const base = { manifest: 2, api: 2, id: 'robot', name: { zh: '机器人' }, about: { zh: '一个机器人' }, entry: 'figure.js', export: 'createBody', axes: [], presets: [], vocab: [word] };
 
 describe('figure packs', () => {
+  it('reads integer axis inputs and validates their saved schemes', () => {
+    const axis = { id: 'size', name: { en: 'Size' }, options: [{ id: 'small', name: { en: 'Small' }, value: 100 }],
+      custom: { name: { en: 'Custom' }, min: 25, max: 400, default: 100, unit: '%' } };
+    const dir = pack({ ...base, axes: [axis] });
+    const m = readManifest(dir);
+    if (typeof m === 'string') throw new Error(m);
+    expect(m.axes[0]).toEqual(axis);
+    const p = { id: m.id, dir, manifest: m, base: '/packs/robot/', builtin: false };
+    for (const id of ['n25', 'n173', 'n400', 'small']) expect(pickWords(p, id, 'en')).not.toBeNull();
+    for (const id of ['n0', 'n401', 'n1e2', 'nNaN', 'n173-extra']) expect(pickWords(p, id, 'en')).toBeNull();
+    for (const custom of [{ ...axis.custom, min: -1 }, { ...axis.custom, default: 401 }, { ...axis.custom, max: 2.5 }]) {
+      expect(readManifest(pack({ ...base, axes: [{ ...axis, custom }] }))).toEqual(expect.any(String));
+    }
+  });
   it('reads the built-in Coo and whale', () => {
     const { packs, problems } = figurePacks([]);
     expect(problems).toEqual([]);

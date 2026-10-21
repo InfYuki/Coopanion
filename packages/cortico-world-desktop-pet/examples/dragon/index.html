@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>幼年体大肥龙 桌宠</title>
+<!-- 空 favicon：不然浏览器会自动去请求 /favicon.ico，控制台里多一条 404 -->
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg: #eef2fa; --panel: #ffffff; --ink: #1d2340; --muted: #5d6685; --line: #d9deec; --accent: #4a72d8; --floor: #dfe5f3; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141826; --panel: #1d2234; --ink: #e8ecf8; --muted: #9aa3c0; --line: #2c3350; --accent: #8fb0f0; --floor: #1b2033; } }
+  :root[data-theme="dark"] { --bg: #141826; --panel: #1d2234; --ink: #e8ecf8; --muted: #9aa3c0; --line: #2c3350; --accent: #8fb0f0; --floor: #1b2033; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  body { display: grid; grid-template-rows: 1fr auto; }
+  .stage { position: relative; overflow: hidden; touch-action: none; min-height: 320px; }
+  .stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 36px; background: var(--floor); z-index: 0; }
+  #stageSvg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
+  .shadow { fill: #1d2340; opacity: .18; }
+  .p-heart { stroke: #ff5c93; fill: #ffd0df; }
+  .p-dust { stroke: #9aa3c0; }
+  .eye { stroke: var(--accent); }
+  .tearf { fill: #8fd0ff; }
+  .bubble { position: absolute; z-index: 3; max-width: 260px; padding: 8px 12px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(20, 30, 70, .12); transform: translate(-50%, -100%); pointer-events: none; white-space: pre-wrap; }
+  .panel { background: var(--panel); border-top: 1px solid var(--line); padding: 10px 16px 14px; display: grid; gap: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .row > span { color: var(--muted); min-width: 3.5em; }
+  button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; cursor: pointer; }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  input[type=range] { accent-color: var(--accent); }
+  .status { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .warn { color: #b4562a; font-size: 12px; }
+  /* 贴图已就位（见 web/dragon/tex/），五官由 figure.js 每帧程序绘制 */
+  .note { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <svg id="stageSvg" aria-hidden="true">
+    <ellipse id="shadow" class="shadow" cx="0" cy="0" rx="0" ry="0"/>
+    <g id="pet"></g>
+    <g id="fx"></g>
+  </svg>
+  <div class="bubble" id="bubble" hidden></div>
+</div>
+<div class="panel">
+  <div class="row" id="exprs"><span>表情</span></div>
+  <div class="row" id="motions"><span>动作</span></div>
+  <div class="row" id="schemes"><span>配色</span></div>
+  <div class="row"><span>交互</span>
+    <button id="talk">说话</button><button id="listen">倾听</button><button id="think">思考</button>
+    <button id="roam">自由活动：开</button>
+    <label>大小 <input id="scale" type="range" min="0.42" max="1.6" step="0.01" value="1.0"></label>
+    <button id="theme">切换深浅</button>
+    <span class="status" id="status">加载中…</span>
+  </div>
+  <div class="row"><span>说明</span>
+    <span class="note">主体直接使用上传原图；表情使用局部贴图，挥手使用遮挡补片。URL 加 <code>?enter=none</code> 可跳过入场掉落。</span>
+  </div>
+</div>
+<script type="module">
+import { createPet } from '../../web/kit/body.js';
+import { createSfx } from '../../web/sound.js';
+import { createDragonFigure } from '../../web/dragon/figure.js';
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), bubble = $('#bubble');
+const sfx = createSfx({ storageKey: 'dragon-demo.sound' });
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => sfx.unlock(), { capture: true }));
+let scale = +$('#scale').value;
+// `?enter=none` 跳过入场掉落 —— 无头截图/调试时它会把角色卡在视口上方（动画没跑完就截图了）
+const QS = new URLSearchParams(location.search);
+const figure = await createDragonFigure(undefined, { scheme: QS.get('scheme') || undefined });
+const ctl = createPet({ petG: $('#pet'), shadowEl: $('#shadow'), fxG: $('#fx') }, {
+  sfx, figure, roam: QS.get('roam') || 'free', enter: QS.get('enter') === 'none' ? '' : 'drop',
+  bounds: () => { const r = stage.getBoundingClientRect(); return { W: r.width, H: r.height, floorY: r.height - 22, S: .42 * scale * Math.min(1.4, r.height / 420) }; },
+});
+new ResizeObserver(() => ctl.resize()).observe(stage);
+$('#scale').oninput = e => { scale = +e.target.value; ctl.resize(); };
+
+// 每个词一个按钮（figure.json 的 vocab），用第一个中文名叫它
+const { vocab, axes } = await (await fetch('../../web/dragon/figure.json')).json();
+for (const w of vocab) {
+  const b = document.createElement('button'); b.textContent = w.names.zh?.[0] ?? w.id;
+  b.onclick = () => { ctl.holdRoam(5); ctl.doWord(w.id); };
+  $(w.kind === 'expression' ? '#exprs' : '#motions').append(b);
+}
+{ const b = document.createElement('button'); b.textContent = '抛起来'; b.onclick = () => ctl.setExpr('dragged'); $('#exprs').append(b); }
+// 配色只有一套：一个按钮，点它只是让她开心一下——换配色是空操作（figure.setScheme 保留接口）
+let scheme = figure.scheme;
+const button = (row, label, on, click) => {
+  const b = document.createElement('button'); b.textContent = label; b.onclick = click; b.classList.toggle('on', on);
+  $(row).append(b);
+  return b;
+};
+const schemeBtns = figure.schemes.map(sc => button('#schemes', sc.brand, sc.id === scheme, async () => {
+  await figure.setScheme(sc.id, { fade: .45 }); scheme = figure.scheme;
+  schemeBtns.forEach((b, i) => b.classList.toggle('on', figure.schemes[i].id === scheme));
+  ctl.pet.sqv += 1.4; ctl.setExpr('happy', 1.2);
+}));
+if (!axes.some(a => a.id === 'outfit')) $('#schemes > span').textContent = '配色（只有一套）';
+
+// 说话：一行字一个字地进气泡，嘴跟着动
+let line = '', shown = 0, nextAt = 0;
+const LINES = ['唔……我是大肥龙，刚睡醒。', '角是真的哦，不要摸。', '今天也一起待着吧？', '尾巴……别踩。'];
+$('#talk').onclick = () => { line = LINES[Math.floor(Math.random() * LINES.length)]; shown = 0; nextAt = 0; bubble.hidden = false; ctl.holdRoam(6); };
+const toggle = (id, fn) => { const b = $(id); b.onclick = () => { b.classList.toggle('on'); fn(b.classList.contains('on')); }; };
+toggle('#listen', on => { ctl.setListening(on); if (on) sfx.listenStart(); else sfx.listenEnd(); });
+toggle('#think', on => ctl.setThinking(on));
+$('#roam').onclick = e => { const on = ctl.roam === 'off'; ctl.setRoam(on ? 'free' : 'off'); e.target.textContent = '自由活动：' + (on ? '开' : '关'); };
+$('#theme').onclick = () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; };
+
+const pt = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+stage.addEventListener('pointerdown', e => { if (ctl.pointerDown(pt(e))) stage.setPointerCapture(e.pointerId); });
+stage.addEventListener('pointermove', e => { stage.style.cursor = ctl.pointerMove(pt(e)) || ''; });
+stage.addEventListener('pointerup', () => ctl.pointerUp());
+stage.addEventListener('pointerleave', () => ctl.pointerLeave());
+
+let last = performance.now(), frames = 0, fpsAt = last;
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (line && now >= nextAt) {
+    if (shown < line.length) { shown++; bubble.textContent = line.slice(0, shown); ctl.talk(); sfx.babble(line[shown - 1]); nextAt = now + 70; }
+    else if (now > nextAt + 1800) { line = ''; bubble.hidden = true; }
+  }
+  ctl.step(dt);
+  ctl.render();
+  if (!bubble.hidden) { const a = ctl.anchor(); bubble.style.left = a.x + 'px'; bubble.style.top = a.y + 'px'; }
+  if (++frames % 30 === 0) { $('#status').textContent = `${Math.round(30000 / (now - fpsAt))} fps · ${ctl.pet.mode}`; fpsAt = now; }
+  requestAnimationFrame(frame);
+}
+$('#status').textContent = '';
+window.ctl = ctl; window.figure = figure;
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

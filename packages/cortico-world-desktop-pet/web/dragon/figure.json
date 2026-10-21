@@ -1,0 +1,779 @@
+{
+  "manifest": 2,
+  "api": 2,
+  "id": "dragon",
+  "version": "0.2.9",
+  "name": {
+    "zh": "幼年体大肥龙",
+    "zh-Hant": "幼年體大肥龍",
+    "en": "Young Fat Dragon",
+    "ja": "幼体デブドラゴン",
+    "ko": "어린 살찐 드래곤",
+    "fr": "Jeune dragon dodu",
+    "de": "Junger fetter Drache",
+    "es-419": "Dragón gordito joven",
+    "pt-BR": "Dragão gordinho jovem",
+    "it": "Giovane drago paffuto",
+    "ru": "Юный толстый дракон"
+  },
+  "about": {
+    "zh": "白发的幼年体大肥龙娘,身高约五个半头,以三分之四视角朝右站立;两只冰蓝色龙角、精灵尖耳、鬓边白玫瑰和蓝色花饰,浅蓝色眼睛半眯着;白色露肩荷叶边连衣裙,蓝色腰带与蝴蝶结,前口袋里插着笔;身后有蓝鳞龙尾,光腿,穿白色玫瑰毛绒拖鞋;坐下时双手放在膝上,裙摆铺开",
+    "en": "a white-haired young dragon girl, about five and a half heads tall, standing in a three-quarter view facing right; two ice-blue horns, pointed ears, a white rose and blue flower hair clip, half-lidded pale blue eyes; a white off-shoulder ruffled dress with blue ribbons and bows, pens in the front pocket, a blue-scaled tail, bare legs and white fluffy rose slippers; when sitting, her hands rest on her knees and her skirt spreads out"
+  },
+  "author": "Pal-AI-Lab",
+  "entry": "figure.js",
+  "export": "createDragonBody",
+  "model": "model.json",
+  "axes": [
+    {
+      "id": "scheme",
+      "name": {
+        "zh": "配色",
+        "zh-Hant": "配色",
+        "en": "Colours",
+        "ja": "カラー",
+        "ko": "색상",
+        "fr": "Couleurs",
+        "de": "Farben",
+        "es-419": "Colores",
+        "pt-BR": "Cores",
+        "it": "Colori",
+        "ru": "Цвета"
+      },
+      "options": [
+        {
+          "id": "origin",
+          "name": {
+            "zh": "原版",
+            "zh-Hant": "原版",
+            "en": "Original"
+          },
+          "accent": "#4A72D8",
+          "thumb": "thumbs/origin.png"
+        }
+      ]
+    },
+    {
+      "id": "size",
+      "custom": {
+        "name": {
+          "zh": "自定义",
+          "zh-Hant": "自訂",
+          "en": "Custom",
+          "ja": "カスタム",
+          "ko": "사용자 지정",
+          "fr": "Personnalisé",
+          "de": "Benutzerdefiniert",
+          "es-419": "Personalizado",
+          "pt-BR": "Personalizado",
+          "it": "Personalizzato",
+          "ru": "Свой размер"
+        },
+        "min": 25,
+        "max": 200,
+        "default": 132,
+        "unit": "%"
+      },
+      "name": {
+        "zh": "大小",
+        "zh-Hant": "大小",
+        "en": "Size",
+        "ja": "大きさ"
+      },
+      "options": [
+        {
+          "id": "s",
+          "value": 100,
+          "name": {
+            "zh": "小",
+            "zh-Hant": "小",
+            "en": "Small",
+            "ja": "小"
+          },
+          "thumb": "thumbs/origin.png"
+        },
+        {
+          "id": "md",
+          "value": 118,
+          "name": {
+            "zh": "中",
+            "zh-Hant": "中",
+            "en": "Medium",
+            "ja": "中"
+          },
+          "thumb": "thumbs/origin.png"
+        },
+        {
+          "id": "lg",
+          "value": 132,
+          "name": {
+            "zh": "大",
+            "zh-Hant": "大",
+            "en": "Large",
+            "ja": "大"
+          },
+          "thumb": "thumbs/origin.png"
+        },
+        {
+          "id": "xl",
+          "value": 150,
+          "name": {
+            "zh": "特大",
+            "zh-Hant": "特大",
+            "en": "Extra large",
+            "ja": "特大"
+          },
+          "thumb": "thumbs/origin.png"
+        }
+      ]
+    },
+    {
+      "id": "stride",
+      "name": {
+        "zh": "步幅",
+        "zh-Hant": "步幅",
+        "en": "Stride",
+        "ja": "歩幅",
+        "ko": "보폭",
+        "fr": "Longueur du pas",
+        "de": "Schrittlänge",
+        "es-419": "Longitud del paso",
+        "pt-BR": "Comprimento do passo",
+        "it": "Ampiezza del passo",
+        "ru": "Длина шага"
+      },
+      "custom": {
+        "unit": "%",
+        "max": 200,
+        "default": 100,
+        "name": {
+          "zh": "自定义",
+          "zh-Hant": "自訂",
+          "en": "Custom",
+          "ja": "カスタム",
+          "ko": "사용자 지정",
+          "fr": "Personnalisé",
+          "de": "Benutzerdefiniert",
+          "es-419": "Personalizado",
+          "pt-BR": "Personalizado",
+          "it": "Personalizzato",
+          "ru": "Своё значение"
+        },
+        "min": 25
+      },
+      "options": [
+        {
+          "value": 100,
+          "name": {
+            "zh": "标准",
+            "zh-Hant": "標準",
+            "en": "Standard",
+            "ja": "標準",
+            "ko": "표준",
+            "fr": "Standard",
+            "de": "Standard",
+            "es-419": "Estándar",
+            "pt-BR": "Padrão",
+            "it": "Standard",
+            "ru": "Обычный"
+          },
+          "id": "normal"
+        },
+        {
+          "value": 50,
+          "name": {
+            "zh": "小步",
+            "zh-Hant": "小步",
+            "en": "Short",
+            "ja": "小さめ",
+            "ko": "짧게",
+            "fr": "Court",
+            "de": "Kurz",
+            "es-419": "Corto",
+            "pt-BR": "Curto",
+            "it": "Corto",
+            "ru": "Короткий"
+          },
+          "id": "short"
+        },
+        {
+          "value": 150,
+          "name": {
+            "zh": "大步",
+            "zh-Hant": "大步",
+            "en": "Long",
+            "ja": "大きめ",
+            "ko": "길게",
+            "fr": "Long",
+            "de": "Lang",
+            "es-419": "Largo",
+            "pt-BR": "Longo",
+            "it": "Lungo",
+            "ru": "Длинный"
+          },
+          "id": "long"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "id": "origin",
+      "pick": {
+        "scheme": "origin",
+        "size": "lg",
+        "stride": "normal"
+      },
+      "name": {
+        "zh": "原版",
+        "zh-Hant": "原版",
+        "en": "Original"
+      },
+      "accent": "#4A72D8",
+      "console": {
+        "light": {
+          "a": "#4a72d8",
+          "a2": "#7fa2ea",
+          "on": "#ffffff",
+          "t": "#3355b8",
+          "c3": "#8ea0c8",
+          "c4": "#8a8a90"
+        },
+        "dark": {
+          "a": "#8fb0f0",
+          "a2": "#b6cbff",
+          "on": "#0e1b3c",
+          "t": "#a8c0f6",
+          "c3": "#8ea0c8",
+          "c4": "#9a9aa0"
+        }
+      }
+    }
+  ],
+  "vocab": [
+    {
+      "id": "neutral",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "平静"
+        ]
+      },
+      "about": {
+        "zh": "默认的脸,半眯着眼睛",
+        "en": "the default face, eyes half closed"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "happy",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "开心",
+          "高兴"
+        ]
+      },
+      "about": {
+        "zh": "眯眼笑,尾巴摇起来",
+        "en": "smiles with narrowed eyes, tail wagging"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "love",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "喜欢",
+          "爱心"
+        ]
+      },
+      "about": {
+        "zh": "眼睛变心形,冒小心心,尾巴摇",
+        "en": "heart-shaped eyes, little hearts float up, tail wags"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "shy",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "害羞"
+        ]
+      },
+      "about": {
+        "zh": "脸红,眼神躲开",
+        "en": "blushes and looks away"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "surprised",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "惊讶",
+          "吃惊"
+        ]
+      },
+      "about": {
+        "zh": "眼睛放大,呆毛翘起来,头顶感叹号",
+        "en": "eyes go wide, the ahoge springs up, an exclamation mark overhead"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "angry",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "生气"
+        ]
+      },
+      "about": {
+        "zh": "皱眉,头顶怒气符号,身体发抖",
+        "en": "frowns, an anger mark overhead, body shaking"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "sad",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "难过",
+          "伤心"
+        ]
+      },
+      "about": {
+        "zh": "八字眉,低头,掉眼泪,尾巴垂下去",
+        "en": "brows slant down, head lowered, tears fall, tail droops"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "sleepy",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "犯困",
+          "困"
+        ]
+      },
+      "about": {
+        "zh": "眼睛眯得更细,打哈欠",
+        "en": "squints further and yawns"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "thinking",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "思考",
+          "想想"
+        ]
+      },
+      "about": {
+        "zh": "眼睛往上看,头顶冒圈",
+        "en": "looks up, rings rise overhead"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "smug",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "得意",
+          "嘚瑟"
+        ]
+      },
+      "about": {
+        "zh": "眯眼斜看,尾巴慢慢摆",
+        "en": "a narrowed sidelong look, tail swinging slowly"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "pout",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "嘟嘴",
+          "哼"
+        ]
+      },
+      "about": {
+        "zh": "嘴嘟起来,脸红,扭头不看你",
+        "en": "pouts, blushes and turns away from you"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "worried",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "担心",
+          "着急"
+        ]
+      },
+      "about": {
+        "zh": "八字眉,冒冷汗",
+        "en": "brows slant down, a cold sweat"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "determined",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "认真",
+          "坚定"
+        ]
+      },
+      "about": {
+        "zh": "眼神压低,一脸认真",
+        "en": "a lowered gaze, a serious face"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "flustered",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "慌张",
+          "窘"
+        ]
+      },
+      "about": {
+        "zh": "眼睛变成 > <,满脸通红冒汗",
+        "en": "eyes turn into > <, red all over and sweating"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "scared",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "害怕",
+          "吓到"
+        ]
+      },
+      "about": {
+        "zh": "眼睛瞪大,冒汗,身体发抖",
+        "en": "eyes wide, sweating, body shaking"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "excited",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "期待",
+          "星星眼"
+        ]
+      },
+      "about": {
+        "zh": "眼睛里闪着星星,尾巴摇得快",
+        "en": "stars sparkle in the eyes, tail wagging fast"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "cry",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "大哭",
+          "哭"
+        ]
+      },
+      "about": {
+        "zh": "闭眼大哭,眼泪直流",
+        "en": "eyes shut, wailing, tears streaming"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "confused",
+      "kind": "expression",
+      "names": {
+        "zh": [
+          "疑惑",
+          "问号"
+        ]
+      },
+      "about": {
+        "zh": "一脸不解,头顶问号,呆毛歪一边",
+        "en": "a puzzled face, a question mark overhead, the ahoge flopping to one side"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "stand",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "站起",
+          "站"
+        ]
+      },
+      "about": {
+        "zh": "站起来(坐着、睡着时)",
+        "en": "stands up (when sitting or asleep)"
+      },
+      "seconds": 1.2
+    },
+    {
+      "id": "jump",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "跳",
+          "跳起来"
+        ]
+      },
+      "about": {
+        "zh": "原地起跳",
+        "en": "jumps on the spot"
+      },
+      "seconds": 1.2
+    },
+    {
+      "id": "hop",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "小跳",
+          "蹦"
+        ]
+      },
+      "about": {
+        "zh": "小小蹦一下",
+        "en": "a small hop"
+      },
+      "seconds": 0.9
+    },
+    {
+      "id": "look",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "张望",
+          "看看"
+        ]
+      },
+      "about": {
+        "zh": "左右张望",
+        "en": "looks left and right"
+      },
+      "seconds": 2.7
+    },
+    {
+      "id": "turn",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "转身"
+        ]
+      },
+      "about": {
+        "zh": "转向另一边",
+        "en": "turns to face the other way"
+      },
+      "seconds": 0.4
+    },
+    {
+      "id": "nod",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "点头"
+        ]
+      },
+      "about": {
+        "zh": "低头两下",
+        "en": "dips the head twice"
+      },
+      "seconds": 0.8
+    },
+    {
+      "id": "shake",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "摇头"
+        ]
+      },
+      "about": {
+        "zh": "脸左右转",
+        "en": "turns the face left and right"
+      },
+      "seconds": 0.8
+    },
+    {
+      "id": "spin",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "转圈"
+        ]
+      },
+      "about": {
+        "zh": "原地转一圈",
+        "en": "spins around once on the spot"
+      },
+      "seconds": 0.8
+    },
+    {
+      "id": "sit",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "坐下",
+          "坐"
+        ]
+      },
+      "about": {
+        "zh": "坐下,裙摆摊在地上",
+        "en": "sits down, the skirt spread on the floor"
+      },
+      "seconds": 0.8,
+      "lasting": true
+    },
+    {
+      "id": "sleep",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "睡觉",
+          "睡"
+        ]
+      },
+      "about": {
+        "zh": "坐着打盹",
+        "en": "dozes sitting down"
+      },
+      "seconds": 0.8,
+      "lasting": true
+    },
+    {
+      "id": "dizzy",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "晕",
+          "转晕"
+        ]
+      },
+      "about": {
+        "zh": "头晕眼花几秒",
+        "en": "dizzy for a few seconds"
+      },
+      "seconds": 3.2
+    },
+    {
+      "id": "walk",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "走走",
+          "散步"
+        ]
+      },
+      "about": {
+        "zh": "随便走一段",
+        "en": "wanders a little way"
+      },
+      "seconds": 12
+    },
+    {
+      "id": "run",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "跑",
+          "跑起来"
+        ]
+      },
+      "about": {
+        "zh": "跑到屏幕另一头",
+        "en": "runs to the other end of the screen"
+      },
+      "seconds": 12
+    },
+    {
+      "id": "wave",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "招手",
+          "打招呼"
+        ]
+      },
+      "about": {
+        "zh": "举起靠近你的那只手挥一挥",
+        "en": "raises the hand nearer to you and waves"
+      },
+      "seconds": 1.7
+    },
+    {
+      "id": "bow",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "鞠躬"
+        ]
+      },
+      "about": {
+        "zh": "闭眼,上身往前倾鞠一躬",
+        "en": "closes the eyes and bows from the waist"
+      },
+      "seconds": 1.7
+    },
+    {
+      "id": "shiver",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "发抖",
+          "哆嗦"
+        ]
+      },
+      "about": {
+        "zh": "缩着身子抖一会儿,尾巴也绷紧",
+        "en": "huddles up and shivers, tail stiff"
+      },
+      "seconds": 1.9
+    },
+    {
+      "id": "dance",
+      "kind": "motion",
+      "names": {
+        "zh": [
+          "跳舞",
+          "摇摆"
+        ]
+      },
+      "about": {
+        "zh": "原地踩着节拍摇摆三秒,冒音符,尾巴跟着甩",
+        "en": "sways to a beat on the spot for three seconds, music notes floating up, tail swinging"
+      },
+      "seconds": 3.4
+    }
+  ],
+  "sounds": {},
+  "can": {
+    "walk": true
+  },
+  "thumb": "thumbs/origin.png"
+}

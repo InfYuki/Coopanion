@@ -21,7 +21,7 @@ import type { DeepPartial } from 'cortico/world.ts';
 import { BUBBLE_SIZE_MAX, BUBBLE_SIZE_MIN, MAX_HOVER_BUTTONS, PET_ACTIONS, SCALE_MAX, SCALE_MIN, SELF_KEYS, USER_MAX, directSettings, hoverButtonList, type DesktopPetConfigSection, type SelfKey } from './config.ts';
 import { charCount, petText } from './i18n/index.ts';
 import type { ModelLanguage } from './model-text.ts';
-import { COO, lookOf, lookPatch, modelName, nameIn, type FigurePack } from './packs.ts';
+import { COO, customAxisValue, lookOf, lookPatch, modelName, nameIn, type FigurePack } from './packs.ts';
 
 export type Tier = 'self' | 'ask';
 
@@ -126,8 +126,9 @@ function pickNames(pack: FigurePack, scheme: string, name: (n: Record<string, st
   for (const [i, a] of m.axes.entries()) {
     const id = preset ? preset.pick[a.id] : parts[i];
     const o = a.options.find((x) => x.id === id);
-    if (!o) return null;
-    words.push(pick(name(a.name, a.id), name(o.name, o.id)));
+    const numeric = customAxisValue(a, id ?? '');
+    if (!o && numeric === null) return null;
+    words.push(pick(name(a.name, a.id), o ? name(o.name, o.id) : `${numeric}${a.custom!.unit}`));
   }
   if (!preset && parts.length !== m.axes.length) return null;
   return picks(words);

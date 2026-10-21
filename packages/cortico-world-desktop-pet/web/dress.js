@@ -24,6 +24,7 @@ import { loadBody } from './body-host.js';
 import { announcePainted, dressFloor, glowColor, lightWall, modeButton, setGlow } from './stage.js';
 
 import { bindAppearance } from './appearance.js';
+import { customInput, picksOf, schemeOf } from './figure-axis.js';
 bindAppearance(document, window);
 
 const $ = (s) => document.querySelector(s);
@@ -165,20 +166,6 @@ function colorRow(slot, item) {
 const nameOf = nameIn;
 /** The name Coo's manifest gives an option of `axis` (palette or an accessory slot), its id until the packs have loaded. */
 const cooName = (axis, id) => nameIn(packs.find((p) => p.id === 'coo')?.axes.find((a) => a.id === axis)?.options.find((o) => o.id === id)?.name) || id;
-/** The option of each axis that `scheme` picks: a preset id, or the options joined by `-` in axis order. */
-function picksOf(pack, scheme) {
-  const preset = pack.presets.find((p) => p.id === scheme);
-  const parts = (scheme || '').split('-');
-  return Object.fromEntries(pack.axes.map((a, i) => {
-    const want = preset ? preset.pick[a.id] : parts[i];
-    return [a.id, a.options.some((o) => o.id === want) ? want : a.options[0].id];
-  }));
-}
-/** `skin.scheme` for a set of picks: the preset that picks exactly them, else the options joined. */
-function schemeOf(pack, picks) {
-  const preset = pack.presets.find((p) => pack.axes.every((a) => p.pick[a.id] === picks[a.id]));
-  return preset ? preset.id : pack.axes.map((a) => picks[a.id]).join('-');
-}
 
 function renderFigure() {
   $('#dress').dataset.figure = skin.figure === 'coo' ? 'coo' : 'pack';
@@ -245,6 +232,10 @@ function renderFigure() {
       });
       list.appendChild(b);
     }
+    if (axis.custom) list.appendChild(customInput(document, axis, picks[axis.id], nameOf, (id) => {
+      apply({ ...skin, scheme: schemeOf(pack, { ...picks, [axis.id]: id }) }, true);
+      sfx.tick();
+    }));
     slot.appendChild(list);
     after.after(label, slot);
     after = slot;

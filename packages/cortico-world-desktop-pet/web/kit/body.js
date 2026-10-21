@@ -123,6 +123,7 @@ const HITS = [[128, 128, 108]];
  * leaves them out, and the frame's `gesture` ({ kind, k: 0..1 }, or null) says which one is playing and how far.
  * `figure.anchors`, `figure.extent` ([x0, y0, x1, y1]) and `figure.hits` ([[x, y, r]]) are in logo units; each
  * is read every frame, so a getter may follow the skin. `figure.setSkin(skin)` hears each skin change.
+ * `figure.gait = 'biped'` uses slower travel and alternating stance/swing foot trajectories.
  */
 export function createPet(els, opts) {
   const { petG, shadowEl, fxG } = els;
@@ -350,7 +351,7 @@ export function createPet(els, opts) {
     if (!(dt > 0 && dt < Infinity)) return;
     T += dt; pet.modeT += dt;
     A = anchors();
-    const m = pet.mode, mt = pet.modeT;
+    const m = pet.mode, mt = pet.modeT, biped = custom?.gait === 'biped';
     let sqT = 0, strideT = 0, liftT = 0, leanT = 0, sitT = 0, bobT = 0, rate = 0, lookT = [0, 0], tiltT = 0;
     let tk = 160, tc = 12, drowseT = 0;
     const free = roam !== 'off' && T > hold && !opts.dialogOpen?.();
@@ -383,10 +384,14 @@ export function createPet(els, opts) {
       case 'walk': case 'run': {
         const run = m === 'run', d = pet.target - pet.x, dist = Math.abs(d), dir = Math.sign(d) || pet.facing;
         pet.facing = dir;
-        const vMax = run ? 250 : 78;
+        const vMax = biped ? (run ? 120 : 42) : (run ? 250 : 78);
         const vT = Math.min(vMax, run ? dist * 4 + 20 : dist * 3 + 14);
-        strideT = run ? 17 : 10; liftT = run ? 15 : 8; bobT = run ? 7 : 3; rate = run ? 4.4 : 2.1;
-        leanT = run ? (dist < 50 && pet.speed > 120 ? -6 : 11) : 4;
+        strideT = biped ? (run ? 12 : 7) : (run ? 17 : 10);
+        liftT = biped ? (run ? 10 : 5) : (run ? 15 : 8);
+        bobT = biped ? (run ? 3.2 : 1.6) : (run ? 7 : 3);
+        rate = biped ? (run ? 1.65 : 1.05) : (run ? 4.4 : 2.1);
+        leanT = biped ? (run ? (dist < 50 && pet.speed > 65 ? -4 : 7) : 2)
+          : (run ? (dist < 50 && pet.speed > 120 ? -6 : 11) : 4);
         if (leanT < 0 && !pet.skid) { pet.skid = true; play('skid', 'move'); }
         const ramp = Math.min(1, mt / (run ? .35 : .25));
         pet.speed = lerp(pet.speed, vT * smooth(ramp), ease(run ? 6 : 9, dt));
@@ -588,6 +593,24 @@ export function createPet(els, opts) {
       let tx, ty;
       if (m === 'drag') { tx = hx + 7 * Math.sin(T * 11 + i * 2.2); ty = hy + 36; }
       else if (m === 'air') { tx = hx + (i ? 9 : -9); ty = hy + 33; }
+      else if (biped && (m === 'walk' || m === 'run')) {
+        // Split stance and swing. During stance a foot rolls rearwards along
+        // the ground; during swing it is lifted and brought forward.
+        // Run stance < .5 permits a two-feet-airborne flight interval.
+        const run = m === 'run', stance = run ? .38 : .64;
+        const ph = ((pet.phase / (2 * Math.PI) + i * .5) % 1 + 1) % 1;
+        let sx, sy;
+        if (ph < stance) {
+          sx = hx + pet.stride * (1 - 2 * ph / stance);
+          sy = FOOT_Y;
+        } else {
+          const u = (ph - stance) / (1 - stance);
+          const k = u * u * (3 - 2 * u);
+          sx = hx + pet.stride * (2 * k - 1);
+          sy = FOOT_Y - pet.lift * Math.sin(Math.PI * u);
+        }
+        tx = lerp(sx, hx + 26, pet.sitK); ty = lerp(sy, FOOT_Y, pet.sitK);
+      }
       else {
         const ph = pet.phase + i * Math.PI;
         const sx = hx + pet.stride * Math.sin(ph), sy = FOOT_Y - pet.lift * Math.max(0, Math.cos(ph));
@@ -659,7 +682,7 @@ export function createPet(els, opts) {
     const face = { ...fc, eyes, gap: pet.gap.map(g => Math.min(64, g + pet.talkK * 12)), blush: pet.blushK };
     const gesture = pet.pulse ? { kind: pet.pulse.kind, k: clamp((T - pet.pulse.t0) / pet.pulse.dur, 0, 1) } : null;
     custom.draw(petG, face, {
-      look: pet.look, legs, low: pet.low, t: T, blink, eyeClose, acc: skin, swing: pet.swing,
+      look: pet.look, legs, phase: pet.phase, low: pet.low, t: T, blink, eyeClose, acc: skin, swing: pet.swing,
       face: fname, mode: pet.mode, modeT: pet.modeT, talk: pet.talkK, drowse: pet.drowse, sit: pet.sitK, facing: pet.faceVis, tilt: pet.tilt, lean, groupRot: rot, gesture,
     });
 

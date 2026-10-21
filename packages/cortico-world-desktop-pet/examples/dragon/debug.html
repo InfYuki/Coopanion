@@ -1,0 +1,96 @@
+<!doctype html>
+<!-- 静态调试图：不接 kit、不跑动画，只调一次 figure.draw()。
+     用途：肉眼验收「比例 / 站位 / 五官」——预览页有掉落入场动画，无头截图会把她卡在视口外。
+     打开 http://127.0.0.1:4318/examples/dragon/debug.html?face=happy&mode=walk -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dragon · static debug</title>
+<style>
+  html,body{margin:0;height:100%;background:#eef2fa;font:13px/1.4 system-ui,"Microsoft YaHei",sans-serif}
+  #wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:10px;padding:10px}
+  .cell{background:#fff;border:1px solid #d9deec;border-radius:10px;overflow:hidden}
+  .cell h3{margin:0;padding:4px 8px;font-size:12px;color:#5d6685;border-bottom:1px solid #eef1f8;font-weight:500}
+  svg{display:block;width:100%;height:auto;background:#fff}
+  body.bg-dark svg{background:#1b1f2e}
+  .grid{stroke:#c9d2e6;stroke-width:.4}
+  .axis{stroke:#e06a6a;stroke-width:.5;stroke-dasharray:2 2}
+  .floor{stroke:#4a72d8;stroke-width:.8}
+</style>
+</head>
+<body>
+<div id="wrap"></div>
+<script type="module">
+import { createDragonFigure } from '../../web/dragon/figure.js';
+
+const q = new URLSearchParams(location.search);
+const face = q.get('face') || 'neutral';
+const mode = q.get('mode') || 'idle';
+const sit  = +(q.get('sit') || 0);
+const look = (q.get('look') || '0,0').split(',').map(Number);
+if (q.get('bg') === 'dark') document.body.classList.add('bg-dark');
+
+const figure = await createDragonFigure(undefined, { scheme: q.get('scheme') || 'origin-s' });
+const wrap = document.getElementById('wrap');
+const NS = 'http://www.w3.org/2000/svg';
+
+// 一帧的 frame 对象：字段与 kit/body.js:661-664 一致
+// ⚠️ frame.face 是**表情名字符串**（figure-frame 契约），眼睛/嘴的数据是 draw() 的第二个参数。
+function frameOf(i, n) {
+  const t = i / n;
+  const open = face === 'sleep' || face === 'sleepy' ? 20 : 16;
+  return {
+    look, legs: [[126, 152, 126 + Math.sin(t * 6.283) * 10, 256], [130, 152, 130 - Math.sin(t * 6.283) * 10, 256]],
+    low: sit * 29, t: i * .16, blink: (i === 3 ? 1 : 0), eyeClose: 0,
+    acc: 0, swing: Math.sin(t * 6.283) * .4,
+    face: face,
+    eyes: [{ shape: face === 'sleep' ? 'lid' : 'ring', rx: 16, ry: open }, { shape: face === 'sleep' ? 'lid' : 'ring', rx: 16, ry: open }],
+    gap: [40, 40], blush: .5,
+    mode, modeT: .5, talk: 0, drowse: 0, sit, facing: 1, tilt: 0, lean: 0, groupRot: 0,
+    gesture: null,
+  };
+}
+const faceData = f => ({ eyes: f.eyes, gap: f.gap, blush: f.blush, emit: null });
+const Figure_drawInto = (host, i, n) => {
+  const f = frameOf(i, n);
+  figure.draw(host, faceData(f), f);
+};
+
+const SHOTS = +(q.get('shots') || 1);
+for (let i = 0; i < SHOTS; i++) {
+  const cell = document.createElement('div'); cell.className = 'cell';
+  const h = document.createElement('h3');
+  h.textContent = `${face}  ${mode}${sit ? ' · sit' : ''}${i === 3 ? ' · blink' : ''}`;
+  cell.append(h);
+  const svg = document.createElementNS(NS, 'svg');
+  const extent=figure.extent;
+  svg.setAttribute('viewBox', `${extent[0]-12} ${extent[1]-12} ${extent[2]-extent[0]+24} ${extent[3]-extent[1]+28}`);
+  // rig 参考网格 + 地面线 + 中线
+  let g = '';
+  for (let y = 0; y <= 256; y += 20) g += `<line class="grid" x1="-16" y1="${y}" x2="272" y2="${y}"/>`;
+  for (let x = 0; x <= 256; x += 20) g += `<line class="grid" x1="${x}" y1="-16" x2="${x}" y2="284"/>`;
+  g += `<line class="axis" x1="128" y1="-16" x2="128" y2="284"/>`;
+  g += `<line class="floor" x1="-16" y1="256" x2="272" y2="256"/>`;
+  svg.innerHTML = `<g>${g}</g>`;
+  const petG = document.createElementNS(NS, 'g');
+  svg.append(petG);
+  cell.append(svg);
+  wrap.append(cell);
+  // figure 内部复用同一个 SVG 节点，换宿主前必须先 dispose()（smoke.mjs 已验证下一次 draw 会重新挂载）
+  if (typeof figure.dispose === 'function') figure.dispose();
+  // 热身：画面里很多量是弹簧/平滑出来的（坐姿淡入、裙摆、头发），单帧截不出来。
+  // 先往一个离屏 <g> 里连画 WARM 帧把弹簧跑到稳态，再把最后一帧画进可见的格子。
+  const WARM = +(q.get('warm') || 70);
+  const scratch = document.createElementNS(NS, 'g');
+  for (let w = 0; w < WARM; w++) {
+    Figure_drawInto(scratch, w, WARM);
+  }
+  if (typeof figure.dispose === 'function') figure.dispose();
+  const f = frameOf(WARM, WARM);
+  figure.draw(petG, faceData(f), f);
+}
+window.__figure = figure;
+window.__done = true;
+</script>
+</body>
+</html>

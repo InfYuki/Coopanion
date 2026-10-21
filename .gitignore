@@ -8,3 +8,7 @@ promo/assets/bgm.mp3
 # local development environments (conda env, local pnpm), never committed
 envs/
 .tools/
+
+# Character artwork stays local (AGENTS.md, third-party material).
+packages/cortico-world-desktop-pet/web/dragon/tex/*.png
+packages/cortico-world-desktop-pet/web/dragon/thumbs/*.png

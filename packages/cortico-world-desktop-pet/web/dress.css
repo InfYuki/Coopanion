@@ -41,6 +41,10 @@ body.dress-page{
 .opt[aria-pressed="true"]{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 14%, var(--surface))}
 .opt svg{width:52px; height:52px; display:block; background:var(--swatch-bg); border-radius:6px}
 .opt span{font-size:12.5px}
+.axis-custom{display:flex; flex-direction:column; justify-content:center; gap:6px; padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); font-size:12.5px}
+.axis-custom.selected{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 14%, var(--surface))}
+.axis-custom input{width:72px; margin-right:6px; padding:5px; font:inherit; color:var(--text); background:var(--wall); border:1px solid var(--line); border-radius:5px}
+.axis-custom small{color:var(--muted)}
 .swatch svg{--skin-ink:var(--sl-ink); --skin-eye:var(--sl-eye)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .swatch svg{--skin-ink:var(--sd-ink); --skin-eye:var(--sd-eye)}}
 :root[data-theme="dark"] .swatch svg{--skin-ink:var(--sd-ink); --skin-eye:var(--sd-eye)}

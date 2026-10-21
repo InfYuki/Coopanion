@@ -50,18 +50,25 @@ Coopanion is a desktop pet. **Coo** lives on the bottom edge of your screen: it 
 
 What changed in each version is in [Releases](https://github.com/Pal-AI-Lab/Coopanion/releases).
 
-### DSH integration
+### Coo-GPT additions
 
-With DeepSeek Harness (DSH) on the same machine, Coo reads what it writes locally and tells you how a task is going and what today has cost so far, without a model request and without a credential.
+This branch adds the following features. See [the feature and dependency guide](docs/COO-GPT-FEATURES.md) for setup, plugins, configuration and limitations.
 
-| Feature | What it does | Details |
+| Feature | What it does | Required data or component |
 |---|---|---|
-| Task progress bubbles | Pops a bubble when a DSH subagent, turn, todo or goal finishes, with no model turn. | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
-| Today's usage & account balance | Click the pet for today's tokens and balance; the menu shows the full page. | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
+| Young Fat Dragon v0.2.9 | A figure with standing, sitting, walking and running, plus 18 expression words and 17 motion words. | The matching figure pack and separately supplied character PNGs. |
+| Custom figure size | Dragon size accepts integers from 25–200%, defaults to 132%, and offers 100/118/132/150% presets. Press Enter or leave the field to save. | The updated figure host and a pack declaring a custom size axis. |
+| Independent stride control | Dragon stride accepts 25–200%, defaults to 100%, and offers 50/100/150% presets. It changes horizontal foot travel without changing cadence, movement speed or figure size. | The dragon pack and matching biped motion kit. |
+| DSH task progress bubbles | Reports completed turns, todos, subagent subtasks and goal-state changes directly in bubbles, without a model turn. | Local DSH session projection files produced by `dsh-session-projection-cache`. |
+| DSH usage and balance | Shows today's token usage and the account's balance and granted credit. | DSH v4 session logs for usage; the DSH-side `coopanion-account-bridge` plugin for balance. |
+| Codex quota and usage | Shows used/remaining quota, reset times, account token aggregates and separately labeled local token usage. Stale or incomplete data is labeled. | Local Codex logs; an installed native Codex executable and an existing sign-in for account queries. No extra Codex plugin. |
+| Codex task progress bubbles | Reports explicit turn/goal completion, plan progress, subagent completion, failures, interruptions, blocking and approval requests. | Logs from the configured local Codex data directory; compatible SQLite metadata adds titles and goal states. |
 
-### Codex integration
+Character PNGs are not committed to Git. A source clone needs the separately supplied dragon assets before the figure can render. These branch additions are not implied to be included in the upstream release downloads linked below.
 
-Coo monitors tasks in the selected local Codex profile and shows local token usage with account quota in its usage bubble and account details. A left click shows a combined usage preview; account details open the Codex card, with Codex/DSH buttons to switch sources. Disabling Codex opens the DSH card directly. Explicit turn completion, plan steps, goals, subagents, failures and approval requests can trigger progress bubbles. Account limits refresh through the installed Codex app-server, using its existing login; old snapshots are marked stale. Other devices and remote sessions absent from local logs are outside local coverage. Configure **Codex monitoring** in settings. See [Codex monitoring](docs/CODEX-MONITOR.md).
+Left-click Coo for the combined DSH/Codex usage preview. Account details open the Codex card with Codex/DSH buttons; disabling Codex monitoring opens DSH directly. Both task monitors establish a baseline on startup and show later milestones without creating model turns.
+
+The DSH reader uses local files and receives balance snapshots from its bridge; credentials stay in DSH. Codex account queries use the installed app-server's existing sign-in and can access the network. Other devices and remote sessions absent from local logs are outside local task coverage. Configure **Codex monitoring** in settings. Source-specific details: [DSH monitoring](docs/DSH-MONITOR.md) and [Codex monitoring](docs/CODEX-MONITOR.md).
 
 ## Install
 

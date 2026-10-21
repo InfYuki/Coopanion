@@ -1,3 +1,4 @@
+<!-- Owner: packages/cortico-world-dsh-monitor/src/paths.ts; packages/cortico-world-dsh-monitor/src/account.ts; packages/cortico-world-desktop-pet/src/world.ts -->
 # DSH 任务进度与账户余额
 
 桌宠盯着本机的 DeepSeek Harness（DSH）：任务到了关键节点主动弹气泡说一声，你点它一下还能知道今天花了多少 token、账户还剩多少钱。两条链路都只读 DSH 写在本地的文件，不经过模型，也不需要任何凭据。
@@ -191,7 +192,7 @@ New-Item -ItemType Junction -Path "$profile\node_modules\coopanion-account-bridg
 - **没有 job 粒度**。DSH 的后台 job 状态只在内存里，磁盘上没有文件；这里只能到「会话 / 回合 / 待办 / 子代理」这一层。
 - **有延迟**。投影缓存是「攒够 200 个事件或 5 秒」才写的，再加上轮询间隔，最坏要等一个间隔再加 5 秒。
 - **首拍只建基线**。桌宠启动前做完的事不会补念；被合并或被间隔压下的也不会补讲。
-- **进度气泡要 `DSH_HOME`**。没设这个变量时投影缓存目录是空的，而余额和今日用量会退回 `~/.dsh`；DSH 装在别处时容易只坏一半。
+- **自定义数据目录**。`DSH_HOME` 可选；未设置时，投影缓存、余额和会话日志统一使用用户主目录下的 `.dsh`。数据放在其他目录时，将 `DSH_HOME` 指向实际数据根目录。
 - **今日用量只认 `assistant/message`**。`compaction/summary` 这类调用的用量不计，与 DSH 自己的投影一致。
 - **余额是快照**。插件每 60 秒刷一次，DSH 关着的时候就停在那里；气泡里那句「N 分钟前从 DSH 读到」就是这份快照的年龄。
 - **只认 v4 日志**。文件名是 `session.v4.jsonl.zstd`，DSH 换版本号后这里要跟着改。

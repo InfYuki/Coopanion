@@ -39,6 +39,11 @@ const DESCRIBE: WorldDescribe = {
   }),
   events: [
     {
+      type: 'desktop-pet.observation',
+      description: { zh: '启用随机屏幕观察后取得的一块屏幕截图,可回应一句简短调侃。', en: 'A scheduled screenshot after screen observations were enabled, inviting a brief playful remark.' },
+      trigger: 'flush',
+    },
+    {
       type: 'desktop-pet.message',
       description: { zh: '使用者在气泡里或对话页上打了字,对话页上的可带图片。', en: 'The person typed a message in the bubble or on the chat page; one from the chat page may carry images.' },
       trigger: 'preempt',

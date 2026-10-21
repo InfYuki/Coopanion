@@ -214,6 +214,10 @@ export class Cua {
    */
   private async call<T>(req: EngineRequest, signal?: AbortSignal): Promise<T> {
     if (req.op !== 'info' && req.op !== 'confirm') await this.permit(req.op === 'screenshot' || req.op === 'zoom' || req.op === 'windows' ? 'see' : 'act', signal);
+    return this.request<T>(req, signal);
+  }
+
+  private request<T>(req: EngineRequest, signal?: AbortSignal): Promise<T> {
     if (signal?.aborted) throw new Interrupted(this.t.interruptedBeforeAct);
     if (!this.engine) { this.engine = this.spawn(); this.engineExit = null; }
     const id = ++this.seq;
@@ -294,8 +298,8 @@ export class Cua {
   }
 
   /** Where the pointer is, said against the latest screenshot. */
-  private cursorText(c: ScreenInfo['cursor']): string {
-    const t = this.t, v = this.shotSize();
+  private cursorText(c: ScreenInfo['cursor'], v: { display: number; scale: number } = this.shotSize()): string {
+    const t = this.t;
     if (!c) return t.cursorNowhere;
     if (c.display !== v.display) return t.cursorOn(c.display);
     return t.cursorAt(`(${Math.round(c.x * v.scale)}, ${Math.round(c.y * v.scale)})`);
@@ -359,6 +363,20 @@ export class Cua {
     const shot = await this.call<ScreenshotResult>({ op: 'screenshot', display: display ?? this.view?.display ?? null, maxWidth, maxHeight, quality }, signal);
     this.screen = screenOf(shot);
     this.view = { display: shot.display, layout: shot.layout, width: shot.width, height: shot.height, scale: shot.scale };
+    return this.screenshotOutcome(shot, lead);
+  }
+
+  /** The observation switch authorizes this read-only capture; interactive coordinates and grants stay unchanged. */
+  async captureObservation(signal?: AbortSignal): Promise<ToolOutcome> {
+    const unavailable = this.unsupported();
+    if (unavailable || !this.host) return { text: unavailable ?? this.t.worldStopped, failed: true };
+    const { maxWidth, maxHeight, quality } = this.cfg.screenshot;
+    const shot = await this.request<ScreenshotResult>({ op: 'screenshot', display: null, maxWidth, maxHeight, quality }, signal);
+    if (signal?.aborted) throw new Interrupted(this.t.interruptedBeforeAct);
+    return this.screenshotOutcome(shot, '');
+  }
+
+  private screenshotOutcome(shot: ScreenshotResult, lead: string): ToolOutcome {
     const seen = this.host?.modelFacts.accepts('image/jpeg') ?? true;
     const t = this.t;
     const here = shot.displays.find((d) => d.index === shot.display)!;
@@ -366,7 +384,7 @@ export class Cua {
     const view = others.length
       ? t.viewOf(here.index, shot.displays.length, here.width, here.height, here.primary, others.map((d) => t.displayBrief(d.index, d.width, d.height, d.primary)).join(t.listSep))
       : t.viewOne(here.width, here.height);
-    const text = t.screenshot(lead, shot.width, shot.height, view, this.cursorText(shot.cursor), shot.foreground, seen);
+    const text = t.screenshot(lead, shot.width, shot.height, view, this.cursorText(shot.cursor, shot), shot.foreground, seen);
     return { text, blobs: [{ bytes: shot.jpeg, mime: 'image/jpeg', name: 'screen.jpg', fallbackText: t.screenshotFallback(shot.width, shot.height) }] };
   }
 

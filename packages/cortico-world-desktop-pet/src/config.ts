@@ -6,6 +6,7 @@ import type { SegmentConfig } from './asr/segmenter.ts';
 import { DEFAULT_HOTKEY } from './asr/hotkey.ts';
 import { capFor, petText } from './i18n/index.ts';
 import { codexText } from './i18n/codex.ts';
+import { observationText } from './i18n/observation.ts';
 import { CUA_DEFAULTS, cuaConfigGroup, type CuaConfig } from './cua/config.ts';
 
 export const DESKTOP_PET_ID = 'desktop-pet';
@@ -190,6 +191,11 @@ export interface DesktopPetConfigSection extends WorldSection {
     executable: string;
     accountRefreshSeconds: number;
   };
+  observation: {
+    enabled: boolean;
+    minIntervalSeconds: number;
+    maxIntervalSeconds: number;
+  };
   /** How far the bot may change its own looks and habits (src/self.ts); read through `selfAdjustMode`. */
   selfAdjust: SelfAdjust;
   /** Under `custom`: per item, true = changed at once, false = asked first. */
@@ -251,6 +257,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   statusBubble: true,
   progress: { enabled: true, intervalSeconds: 20, coalesceSeconds: 15, idleSeconds: 90, reportCompletion: true },
   codex: { enabled: true, home: '', executable: '', accountRefreshSeconds: 300 },
+  observation: { enabled: false, minIntervalSeconds: 300, maxIntervalSeconds: 900 },
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {
@@ -365,5 +372,22 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
       },
     },
   };
-  return [pet, sound, asr, cuaConfigGroup(language), codexGroup];
+  const observation = observationText(language).config;
+  const observationGroup: ConfigGroup = {
+    id: `world:${DESKTOP_PET_ID}:observation`,
+    owner: `world:${DESKTOP_PET_ID}`,
+    schema: {
+      type: 'object', title: observation.group,
+      properties: {
+        [`${K}.observation.enabled`]: { type: 'boolean', title: observation.enabled.title, description: `${observation.enabled.description} ${observation.help}`, 'x-hot': true },
+        [`${K}.observation.minIntervalSeconds`]: { type: 'integer', title: observation.min.title, description: observation.min.description, minimum: 30, maximum: 86400, 'x-suffix': observation.seconds, 'x-hot': true },
+        [`${K}.observation.maxIntervalSeconds`]: { type: 'integer', title: observation.max.title, description: observation.max.description, minimum: 30, maximum: 86400, 'x-suffix': observation.seconds, 'x-hot': true },
+      },
+    },
+  };
+  return [pet, sound, asr, cuaConfigGroup(language), codexGroup, observationGroup];
+}
+
+export function validObservationInterval(min: number, max: number): boolean {
+  return Number.isInteger(min) && Number.isInteger(max) && min >= 30 && max <= 86400 && min <= max;
 }

@@ -30,13 +30,14 @@ import type { Language } from 'cortico/core/language.ts';
 import type { DeepPartial } from 'cortico/world.ts';
 import {
   DESKTOP_PET_DEFAULTS, DESKTOP_PET_ID, MAX_HOVER_BUTTONS, PET_ACTIONS, SELF_KEYS, TOUCH_KINDS, USER_MAX, asrEngineFor, desktopPetConfigGroups, directSettings,
-  hoverButtonList, selfAdjustMode, touchWakes,
+  hoverButtonList, selfAdjustMode, touchWakes, validObservationInterval,
   type AsrEngine, type DesktopPetConfigSection, type MicMode, type PetSkin, type PetTheme, type RoamMode, type SelfKey,
 } from './config.ts';
 import { capFor, cutChars, petText, type PetText } from './i18n/index.ts';
 import { formatCompletion, formatMilestones } from './progress.ts';
 import { PetCodexMonitor, codexAccountLines, codexMilestoneLine } from './codex.ts';
 import { codexText } from './i18n/codex.ts';
+import { RandomObservationClock } from './observation.ts';
 import { PetServer, type PageMessage } from './server.ts';
 import {
   defaultBridgeDir,
@@ -246,6 +247,8 @@ export interface DesktopPetWorldOptions {
   watchHotkey?: typeof watchHotkey;
   /** Starts the system recognizer's helper; tests pass a fake. */
   spawnSystemRecognizer?: typeof spawn;
+  /** An embedding host may provide its own read-only screen capture. */
+  captureObservation?: (signal: AbortSignal) => Promise<ToolOutcome>;
   /** Directories whose subdirectories are installed figure packs (src/packs.ts). */
   packRoots?: () => string[];
   /** The one of them the dressing page installs packs into (src/pack-import.ts); without it the page offers no import. */
@@ -384,6 +387,7 @@ export class DesktopPetWorld implements World {
   private readonly codex = new PetCodexMonitor();
   private codexTick: Promise<void> | null = null;
   private lastCodexProgressAt = 0;
+  private readonly observation: RandomObservationClock;
   /** Where the pet window last said the pet stands, measured as `petX` is; written by `savePosition` on stop. */
   private standX: number | null = null;
   private readonly voiceSockets = new Set<WorldStreamSocket>();
@@ -438,6 +442,11 @@ export class DesktopPetWorld implements World {
         opts.onCuaAnswer?.(said);
         return said;
       },
+    });
+    this.observation = new RandomObservationClock({
+      canObserve: () => this.canObserveScreen(),
+      captureAndNotify: (signal) => this.observeScreen(signal),
+      onError: () => this.log?.warn('Screen observation capture failed'),
     });
     this.importer = opts.packDir ? new PackImporter({ packDir: opts.packDir, packs: () => this.packs(), text: () => this.ui }) : null;
     this.status = new StatusTracker((status) => this.server.sendPet({ t: 'status', status }), opts.describeTool, () => this.ui.busy);
@@ -653,6 +662,8 @@ export class DesktopPetWorld implements World {
     this.prefsKey = this.prefsSignature();
     this.prefsTimer = setInterval(() => this.syncPrefs(), PREFS_SYNC_MS);
     this.armProgress();
+    this.syncObservation();
+    this.observation.start();
   }
 
   async stop(): Promise<void> {
@@ -663,6 +674,7 @@ export class DesktopPetWorld implements World {
     if (this.prefsTimer) clearInterval(this.prefsTimer);
     this.prefsTimer = null;
     this.disarmProgress();
+    this.observation.stop();
     this.codex.dispose();
     this.savePosition();
     await this.importer?.cancel();
@@ -852,6 +864,34 @@ export class DesktopPetWorld implements World {
     } catch (err) {
       this.log?.warn(`Codex monitor: ${(err as Error).message}`);
     }
+  }
+
+  private syncObservation(): void {
+    this.observation.configure({ ...DESKTOP_PET_DEFAULTS.observation, ...this.cfg.observation });
+  }
+
+  private canObserveScreen(): boolean {
+    if (this.stopped || !this.host || !this.cfg.observation?.enabled) return false;
+    if (!validObservationInterval(this.cfg.observation.minIntervalSeconds, this.cfg.observation.maxIntervalSeconds)) return false;
+    if (!this.server.petConnected || this.petHidden || Date.now() < this.busyUntil) return false;
+    if (this.phase !== null && this.phase.state !== 'idle') return false;
+    if (this.quiet || this.ask || this.dialogs.size || this.confirms.size || this.opts.controls?.isPaused?.()) return false;
+    try { return this.host.modelFacts.accepts('image/jpeg'); }
+    catch { return false; }
+  }
+
+  private async observeScreen(signal: AbortSignal): Promise<void> {
+    if (signal.aborted || !this.canObserveScreen()) return;
+    const capture = this.opts.captureObservation
+      ? await this.opts.captureObservation(signal)
+      : await this.cua.captureObservation(signal);
+    if (signal.aborted || !this.canObserveScreen()) return;
+    const images = capture.blobs?.filter(blob => 'bytes' in blob && blob.mime === 'image/jpeg' && blob.bytes.length > 0);
+    if (capture.failed || !images?.length) return;
+    await this.push('desktop-pet.observation', 'desktop-pet.observation', this.t.observation, 'flush', {
+      blobs: images,
+      meta: { kind: 'screen-observation' },
+    });
   }
 
   /** Computer use is on and this system runs it. */
@@ -1076,6 +1116,7 @@ export class DesktopPetWorld implements World {
 
   /** Config is a live object edited by the console; changes reach the pages within PREFS_SYNC_MS. */
   private syncPrefs(): void {
+    this.syncObservation();
     this.syncProgressInterval();
     this.segmenter.configure(this.segmentConfig());
     if (this.cfg.asr.enabled && this.runningEngine && this.runningEngine !== this.engine()) void this.startVoiceBackend();

@@ -1,7 +1,7 @@
 /**
  * 「习惯」: the everyday settings of the desktop pet, in sections: 通用 (language, what Coo calls you,
  * the app's anonymous usage statistics in the `companion` group, core/telemetry.ts), 行为与互动, 显示,
- * 音效, 电脑操作 (features/cua) and 其他 (the OBS overlay). Every row names its setting in the label column, except one that
+ * 音效, 电脑操作 (features/cua), 屏幕观察 and 其他 (the OBS overlay). Every row names its setting in the label column, except one that
  * only refines the row above it. In each row the setting comes first and what it means under it. An
  * on/off setting is a switch; picks among several (sound kinds, the popups) are checkboxes. Most are
  * written to the desktop-pet World's config group through `/api/config` (only the keys shown here are sent). The pet's own menu
@@ -20,7 +20,9 @@
  * `setWakeKinds` and `setSelfAdjustCustom`, which set the mode to `custom` in the same write.
  */
 import { ICONS } from 'cortico-world-desktop-pet/web/ui.js';
+import { observationText } from '../../../packages/cortico-world-desktop-pet/src/i18n/observation.ts';
 import { get, invokePanel, setConfig } from '../../base/api.ts';
+import { LANGUAGE } from '../../base/language.ts';
 import type { Page, PageContext } from '../../base/page.ts';
 import { intro } from '../intro.ts';
 import { cuaSection } from '../cua/index.ts';
@@ -29,6 +31,7 @@ import { S } from './strings.ts';
 
 const GROUP = 'world:desktop-pet';
 const SOUND_GROUP = 'world:desktop-pet:sound';
+const OBSERVATION_GROUP = 'world:desktop-pet:observation';
 const STATS_GROUP = 'companion';
 const STATS_KEY = 'companion.telemetry';
 const STATS_DOC = 'https://github.com/Pal-AI-Lab/Coopanion/blob/main/docs/TELEMETRY.md';
@@ -355,6 +358,81 @@ async function mount(ctx: PageContext): Promise<void> {
   );
   root.append(sounds.el, cuaSection(ctx, row));
 
+  const observationCopy = observationText(LANGUAGE).config;
+  const observation = ui.sheet({ title: observationCopy.group });
+  const observationMsg = ui.msgline('');
+  let observationSaved = { enabled: false, minIntervalSeconds: 300, maxIntervalSeconds: 900 };
+  let observationDirty = false;
+  let observationSaving = false;
+  const observationEnabled = ui.checkbox(observationCopy.enabled.title, { onChange: (on) => void saveObservation(!on) });
+  const observationMin = ui.input({ type: 'number' });
+  const observationMax = ui.input({ type: 'number' });
+  observationMin.setAttribute('aria-label', observationCopy.min.title);
+  observationMax.setAttribute('aria-label', observationCopy.max.title);
+  const intervalBox = (input: HTMLInputElement) => {
+    input.min = '30'; input.max = '86400'; input.step = '1';
+    const box = ui.h('div', 'companion-rangebox');
+    box.append(input, ui.h('span', 'companion-rangeval', observationCopy.seconds));
+    input.addEventListener('change', () => void saveObservation());
+    input.addEventListener('input', () => { observationDirty = true; });
+    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') input.blur(); });
+    return box;
+  };
+  observation.body.append(
+    row(observationCopy.enabled.title, observationEnabled.el, observationCopy.enabled.description),
+    row(observationCopy.min.title, intervalBox(observationMin)),
+    row(observationCopy.max.title, intervalBox(observationMax), observationCopy.intervalHelp),
+    ui.h('p', 'home-note', observationCopy.help),
+    observationMsg,
+  );
+  root.append(observation.el);
+
+  const observationValid = (min: number, max: number) => Number.isInteger(min) && Number.isInteger(max) && min >= 30 && max <= 86400 && min <= max;
+  const showObservation = () => {
+    observationEnabled.setChecked(observationSaved.enabled);
+    observationMin.value = String(observationSaved.minIntervalSeconds);
+    observationMax.value = String(observationSaved.maxIntervalSeconds);
+  };
+  showObservation();
+  async function saveObservation(disabling = false): Promise<void> {
+    if (observationSaving) return;
+    observationDirty = true;
+    const next = { enabled: observationEnabled.checked, minIntervalSeconds: Number(observationMin.value), maxIntervalSeconds: Number(observationMax.value) };
+    const valid = observationMin.value !== '' && observationMax.value !== '' && observationValid(next.minIntervalSeconds, next.maxIntervalSeconds);
+    if (!valid && !(disabling && !next.enabled)) {
+      observationEnabled.setChecked(observationSaved.enabled);
+      observationMsg.textContent = observationCopy.intervalError;
+      observationMsg.classList.add('bad');
+      return;
+    }
+    observationSaving = true;
+    observationEnabled.input.disabled = observationMin.disabled = observationMax.disabled = true;
+    const values: Record<string, boolean | number> = { [`${K}.observation.enabled`]: next.enabled };
+    if (valid) {
+      values[`${K}.observation.minIntervalSeconds`] = next.minIntervalSeconds;
+      values[`${K}.observation.maxIntervalSeconds`] = next.maxIntervalSeconds;
+    }
+    try {
+      await setConfig(OBSERVATION_GROUP, values, opts);
+      observationSaved = valid ? next : { ...observationSaved, enabled: false };
+      observationDirty = false;
+      showObservation();
+      const savedValid = observationValid(observationSaved.minIntervalSeconds, observationSaved.maxIntervalSeconds);
+      observationMsg.textContent = savedValid ? '' : observationCopy.intervalError;
+      observationMsg.classList.toggle('bad', !savedValid);
+    } catch (error) {
+      if (!signal.aborted) {
+        showObservation();
+        observationDirty = false;
+        observationMsg.textContent = observationCopy.saveFailed(errText(error));
+        observationMsg.classList.add('bad');
+      }
+    } finally {
+      observationSaving = false;
+      observationEnabled.input.disabled = observationMin.disabled = observationMax.disabled = false;
+    }
+  }
+
   /* ---------- other: the OBS overlay ---------- */
   const other = ui.sheet({ title: S.groupOther });
   const otherMsg = ui.msgline('');
@@ -432,11 +510,13 @@ async function mount(ctx: PageContext): Promise<void> {
     let values: Record<string, unknown> = {};
     let soundValues: Record<string, unknown> = {};
     let statsValues: Record<string, unknown> = {};
+    let observationValues: Record<string, unknown> = {};
     try {
       const d = await get<{ groups?: ConfigEntry[] }>('/api/config', opts);
       values = d.groups?.find((g) => g.group.id === GROUP)?.values ?? {};
       soundValues = d.groups?.find((g) => g.group.id === SOUND_GROUP)?.values ?? {};
       statsValues = d.groups?.find((g) => g.group.id === STATS_GROUP)?.values ?? {};
+      observationValues = d.groups?.find((g) => g.group.id === OBSERVATION_GROUP)?.values ?? {};
     } catch { return; }
     if (typeof statsValues[STATS_KEY] === 'boolean') stats.setChecked(statsValues[STATS_KEY] as boolean);
     if (typeof statsValues[LANGUAGE_KEY] === 'string' && document.activeElement !== language) {
@@ -445,6 +525,24 @@ async function mount(ctx: PageContext): Promise<void> {
       language.value = statsValues[LANGUAGE_KEY] as string;
     }
     const active = document.activeElement;
+    if (!observationDirty && !observationSaving && active !== observationMin && active !== observationMax) {
+      const enabled = observationValues[`${K}.observation.enabled`];
+      const min = observationValues[`${K}.observation.minIntervalSeconds`];
+      const max = observationValues[`${K}.observation.maxIntervalSeconds`];
+      observationSaved = {
+        enabled: typeof enabled === 'boolean' ? enabled : false,
+        minIntervalSeconds: typeof min === 'number' ? min : 300,
+        maxIntervalSeconds: typeof max === 'number' ? max : 900,
+      };
+      showObservation();
+      if (!observationValid(observationSaved.minIntervalSeconds, observationSaved.maxIntervalSeconds)) {
+        observationMsg.textContent = observationCopy.intervalError;
+        observationMsg.classList.add('bad');
+      } else if (observationMsg.textContent === observationCopy.intervalError) {
+        observationMsg.textContent = '';
+        observationMsg.classList.remove('bad');
+      }
+    }
     if (typeof values[KEYS.user] === 'string' && active !== user) {
       user.value = values[KEYS.user] as string;
       user.dataset.saved = user.value;

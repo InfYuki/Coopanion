@@ -63,6 +63,7 @@ This branch adds the following features. See [the feature and dependency guide](
 | DSH usage and balance | Shows today's token usage and the account's balance and granted credit. | DSH v4 session logs for usage; the DSH-side `coopanion-account-bridge` plugin for balance. |
 | Codex quota and usage | Shows used/remaining quota, reset times, account token aggregates and separately labeled local token usage. Stale or incomplete data is labeled. | Local Codex logs; an installed native Codex executable and an existing sign-in for account queries. No extra Codex plugin. |
 | Codex task progress bubbles | Reports explicit turn/goal completion, plan progress, subagent completion, failures, interruptions, blocking and approval requests. | Logs from the configured local Codex data directory; compatible SQLite metadata adds titles and goal states. |
+| Random screen observations | When enabled, captures the current screen at a newly randomized interval and lets Coo offer one short, friendly quip. Off by default; the minimum and maximum intervals are adjustable. | A vision-capable active model and working screen-capture permissions. Screenshots enter Core event storage and model context; model usage can incur cost. See [screen observations](docs/SCREEN-OBSERVATION.md). |
 
 Character PNGs are not committed to Git. A source clone needs the separately supplied dragon assets before the figure can render. These branch additions are not implied to be included in the upstream release downloads linked below.
 

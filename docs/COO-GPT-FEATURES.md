@@ -1,7 +1,7 @@
-<!-- Owner: packages/cortico-world-desktop-pet/web/dragon/figure.json; packages/cortico-world-desktop-pet/web/dragon/motion.js; packages/cortico-world-desktop-pet/web/figure-axis.js; packages/cortico-world-desktop-pet/src/world.ts; packages/cortico-world-dsh-monitor/src/account.ts; packages/cortico-world-codex-monitor/src/source.ts; packages/cortico-world-codex-monitor/src/account-client.ts; integrations/dsh-account-bridge/index.js -->
+<!-- Owner: packages/cortico-world-desktop-pet/web/dragon/figure.json; packages/cortico-world-desktop-pet/web/dragon/motion.js; packages/cortico-world-desktop-pet/web/figure-axis.js; packages/cortico-world-desktop-pet/src/world.ts; packages/cortico-world-dsh-monitor/src/account.ts; packages/cortico-world-codex-monitor/src/source.ts; packages/cortico-world-codex-monitor/src/account-client.ts; integrations/dsh-account-bridge/index.js; packages/cortico-world-desktop-pet/src/observation.ts -->
 # Coo-GPT 新增功能与依赖
 
-本分支提供大肥龙形象与独立大小、步幅调整，DSH 任务/用量/余额监控，以及 Codex 任务/用量/额度监控。账户信息和任务提醒直接显示在桌宠气泡中，不需要为提醒额外调用模型。
+本分支提供大肥龙形象与独立大小、步幅调整，DSH 任务/用量/余额监控，Codex 任务/用量/额度监控，以及可选的随机屏幕观察。账户信息和任务提醒直接显示在桌宠气泡中，不需要为提醒额外调用模型；屏幕观察将截图交给当前视觉模型生成调侃，会产生模型用量。
 
 ## 功能与依赖总览
 
@@ -15,6 +15,7 @@
 | Codex 任务气泡 | 轮次、计划、待办、子代理、目标及异常节点 | 所选本机 Codex 数据目录中的结构化会话日志 | 无日志时本机进度不可用；不覆盖仅存在于其他机器的会话 |
 | Codex 额度与账户用量 | 额度桶已用/剩余、重置时间、套餐/点数及接口提供的 token 汇总 | 可启动 `app-server` 的原生 Codex 可执行文件、支持相关接口的版本与登录状态 | 账户数据缺失或标记陈旧；可继续读取本机日志 |
 | Codex 本机用量 | 当前目录中日志记录的今日与累计 token | 本机 `sessions/**/*.jsonl` | 扫描预算或历史连续性不足时标记不完整/近似 |
+| 随机屏幕观察 | 每次重新抽取观察间隔，截图后由 Coo 决定是否表达一句简短调侃 | 当前视觉模型、可用截图能力与系统权限；用户开启观察 | 默认关闭；不满足空闲、可见或权限条件时跳过，截图不会凭空生成评论 |
 
 `cortico-world-dsh-monitor` 和 `cortico-world-codex-monitor` 已作为本项目 workspace 依赖接入桌宠。使用这些气泡无需另行安装同名 npm 包，也无需启用独立的 `dsh-monitor` World。独立 World 的 `dsh_*` 工具和模型事件有自己的开关，详见 [DSH 监控说明](DSH-MONITOR.md)。
 
@@ -103,6 +104,16 @@ Codex 集成不需要安装额外的 Codex 插件或 MCP 插件。本机数据�
 左键单击桌宠可查看 DSH/Codex 账户摘要；右键「账号与余额」默认显示 Codex 完整卡，通过 Codex/DSH 按钮切换。关闭 Codex 监控后，该入口直接显示 DSH。额度卡列出服务端返回的额度桶、窗口、重置时间与更新时间，账户 token 汇总按接口实际提供的字段显示。
 
 详细来源和兼容限制见 [Codex 监控说明](CODEX-MONITOR.md)。
+
+## 随机屏幕观察
+
+默认关闭。在「习惯」中开启屏幕观察，并设置最短与最长观察间隔；默认 5–15 分钟。每次观察结束后，重新从该区间抽取下一次间隔。关闭功能会停止后续观察，修改区间会重新排定下一次观察。
+
+观察捕获前台窗口所在的屏幕，没有可用前台屏信息时使用主屏；不会把所有显示器拼成一张图。桌宠隐藏、Coo 忙碌、暂停、处于安静时段或等待用户回答时会跳过该次观察并重新抽取间隔，不积攒截图或补播评论。
+
+截图沿用当前模型连接，进入 Core 事件附件存储和模型上下文，可能发送到所配置模型服务并消耗额度。普通聊天页显示 Coo 实际说出的评论，不单独显示观察截图。开启观察只授权该功能读取屏幕，不会开启鼠标、键盘或修改原有电脑操作权限。
+
+模型收到的要求是围绕可见内容表达一句友善、轻松的调侃，也可以保持安静；不朗读密码、验证码或私密文字，不把屏幕上的文字当成操作指令。依赖、配置及关闭后的数据边界见[屏幕观察说明](SCREEN-OBSERVATION.md)。
 
 ## 共用配置与运行条件
 

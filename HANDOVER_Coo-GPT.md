@@ -106,6 +106,14 @@ node examples/dragon/check-stride.mjs
 
 ## 新会话起点
 
+### 随机屏幕观察（2026-10-21 新增）
+
+默认关闭，在「习惯 → 屏幕观察」开启并设置最短/最长间隔，默认 300–900 秒，范围 30–86400 秒。每次完成或跳过后重抽间隔，修改配置会重新计时。实现为 `src/observation.ts` 时钟、`Cua.captureObservation()` 只读截图及 `world.ts` 带附件事件，文档为 `docs/SCREEN-OBSERVATION.md`。
+
+观察独立于电脑操作开关，不授予输入权限或修改交互截图坐标。只有桌宠连接且未隐藏、Coo 空闲、没有等待回答且非暂停/安静时段、模型支持 JPEG 时才捕获；截图完成再次检查，关闭/停止取消后不提交。截图交当前模型生成一句简短友善调侃，也可保持安静；截图保存于 Core 事件附件并进入模型上下文，关闭不删除既有记录。普通聊天页显示回复，不显示观察截图。
+
+本轮检查：根36文件296通过1跳过，World34文件322通过，三个类型检查和 `build:cortico` 通过。测试使用生成的 JPEG、隔离 Core/WebSocket 和脚本模型验证完整事件与气泡链路，未对真实屏幕或用户安装数据进行验证。本次功能仅本地提交，最新已推送的文档与 Codex 功能为此前的 `427a8f4`。
+
 ### Codex 监控（2026-10-21 新增）
 
 `Coo-GPT` 已增加 Codex 账户额度、账户/本机 token 用量和任务进度气泡，详见 `docs/CODEX-MONITOR.md`。数据层在 `packages/cortico-world-codex-monitor`；桌宠集成在 `src/codex.ts`、`src/world.ts`，配置为 `worlds.desktop-pet.codex.*`。

@@ -3,6 +3,8 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { aggregate, isRunning, isSettled, parseProjection, readSessions, sumTokens, defaultCacheDir } from '../src/dsh-source.ts';
+// 从 account.ts 取，顺带钉住 re-export 链路（index.ts 走的正是这条）
+import { defaultBridgeDir, defaultSessionsDir } from '../src/account.ts';
 import { projectionJson, writeProjections } from './helpers/fixtures.ts';
 
 let scratch: string;
@@ -102,6 +104,8 @@ describe('聚合', () => {
 describe('目录推导', () => {
   it('DSH_HOME 覆盖时跟着走', () => {
     expect(defaultCacheDir({ DSH_HOME: 'C:\\custom\\.dsh' })).toBe(join('C:\\custom\\.dsh', 'storages', 'session_projcache', 'sessions'));
+    expect(defaultBridgeDir({ DSH_HOME: 'C:\\custom\\.dsh' })).toBe(join('C:\\custom\\.dsh', 'storages', 'coopanion-bridge'));
+    expect(defaultSessionsDir({ DSH_HOME: 'C:\\custom\\.dsh' })).toBe(join('C:\\custom\\.dsh', 'sessions'));
   });
 
   it('没有 DSH_HOME 时回退到 ~/.dsh/storages/session_projcache/sessions', () => {
@@ -111,5 +115,54 @@ describe('目录推导', () => {
     expect(defaultCacheDir({})).toBe(join('.', '.dsh', 'storages', 'session_projcache', 'sessions'));
     // 空白 DSH_HOME 等同于缺失
     expect(defaultCacheDir({ DSH_HOME: '   ', USERPROFILE: 'C:\\Users\\x' })).toBe(join('C:\\Users\\x', '.dsh', 'storages', 'session_projcache', 'sessions'));
+  });
+
+  it('没有 DSH_HOME 时余额桥目录回退到 ~/.dsh/storages/coopanion-bridge', () => {
+    expect(defaultBridgeDir({ USERPROFILE: 'C:\\Users\\x' })).toBe(join('C:\\Users\\x', '.dsh', 'storages', 'coopanion-bridge'));
+    expect(defaultBridgeDir({ HOME: '/home/x' })).toBe(join('/home/x', '.dsh', 'storages', 'coopanion-bridge'));
+    expect(defaultBridgeDir({})).toBe(join('.', '.dsh', 'storages', 'coopanion-bridge'));
+    // 空白 DSH_HOME 等同于缺失
+    expect(defaultBridgeDir({ DSH_HOME: '   ', USERPROFILE: 'C:\\Users\\x' })).toBe(join('C:\\Users\\x', '.dsh', 'storages', 'coopanion-bridge'));
+  });
+
+  it('没有 DSH_HOME 时会话日志目录回退到 ~/.dsh/sessions', () => {
+    expect(defaultSessionsDir({ USERPROFILE: 'C:\\Users\\x' })).toBe(join('C:\\Users\\x', '.dsh', 'sessions'));
+    expect(defaultSessionsDir({ HOME: '/home/x' })).toBe(join('/home/x', '.dsh', 'sessions'));
+    expect(defaultSessionsDir({})).toBe(join('.', '.dsh', 'sessions'));
+    // 空白 DSH_HOME 等同于缺失
+    expect(defaultSessionsDir({ DSH_HOME: '   ', USERPROFILE: 'C:\\Users\\x' })).toBe(join('C:\\Users\\x', '.dsh', 'sessions'));
+  });
+
+  it('三个函数的子路径各不相同', () => {
+    const env = { DSH_HOME: 'C:\\custom\\.dsh' };
+    expect(defaultCacheDir(env)).toBe(join('C:\\custom\\.dsh', 'storages', 'session_projcache', 'sessions'));
+    expect(defaultBridgeDir(env)).toBe(join('C:\\custom\\.dsh', 'storages', 'coopanion-bridge'));
+    expect(defaultSessionsDir(env)).toBe(join('C:\\custom\\.dsh', 'sessions'));
+  });
+
+  it('家目录兜底只认传入的 env，不去读 process.env', () => {
+    // 回归：defaultBridgeDir / defaultSessionsDir 曾经忽略入参、直接读 process.env 兜底
+    const savedProfile = process.env.USERPROFILE;
+    const savedHome = process.env.HOME;
+    process.env.USERPROFILE = 'C:\\from-process';
+    process.env.HOME = '/from-process';
+    try {
+      const cases: Array<[ (env: NodeJS.ProcessEnv) => string, string ]> = [
+        [defaultCacheDir, join('storages', 'session_projcache', 'sessions')],
+        [defaultBridgeDir, join('storages', 'coopanion-bridge')],
+        [defaultSessionsDir, 'sessions'],
+      ];
+      for (const [dir, sub] of cases) {
+        // 传入的 env 说了算：期望值恰好是它推出来的路径
+        expect(dir({ USERPROFILE: 'C:\\u\\x' })).toBe(join('C:\\u\\x', '.dsh', sub));
+        expect(dir({ HOME: '/u/x' })).toBe(join('/u/x', '.dsh', sub));
+        expect(dir({})).toBe(join('.', '.dsh', sub));
+        // process.env 里的家目录不得渗进来
+        expect(dir({ USERPROFILE: 'C:\\u\\x' })).not.toContain('from-process');
+      }
+    } finally {
+      if (savedProfile === undefined) delete process.env.USERPROFILE; else process.env.USERPROFILE = savedProfile;
+      if (savedHome === undefined) delete process.env.HOME; else process.env.HOME = savedHome;
+    }
   });
 });

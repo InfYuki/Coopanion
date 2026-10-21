@@ -66,21 +66,8 @@ const ZSTD_MAGIC = [0x28, 0xb5, 0x2f, 0xfd];
 /** 解压后最多读多少字节，防止一次点击把内存吃光。 */
 const MAX_DECODED_BYTES = 256 * 1024 * 1024;
 
-/** 桥接插件写出的目录。 */
-export function defaultBridgeDir(env: NodeJS.ProcessEnv = process.env): string {
-  const home = env.DSH_HOME?.trim();
-  return join(home || join(homedirFallback(), '.dsh'), 'storages', 'coopanion-bridge');
-}
-
-/** DSH 的会话日志根目录。 */
-export function defaultSessionsDir(env: NodeJS.ProcessEnv = process.env): string {
-  const home = env.DSH_HOME?.trim();
-  return join(home || join(homedirFallback(), '.dsh'), 'sessions');
-}
-
-function homedirFallback(): string {
-  return process.env.USERPROFILE || process.env.HOME || '.';
-}
+/** 目录推导统一在 `paths.ts`；这里只做转出，保持既有 import 路径可用。 */
+export { defaultBridgeDir, defaultSessionsDir } from './paths.ts';
 
 /** 读账号快照；文件不存在、坏掉或结构不符时返回 null（调用方照实说「没拿到」）。 */
 export function readAccount(bridgeDir: string): AccountSnapshot | null {

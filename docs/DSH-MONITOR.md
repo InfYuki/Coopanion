@@ -111,7 +111,7 @@ DSH 跑一个长任务时，你得切回它的窗口才知道做到哪了；用�
 | DSH Host 插件 `coopanion-account-bridge` | 本仓库 `integrations/dsh-account-bridge/`，bundle（`dsh.bundle.patch` 指向 `cordis.patch.yml`）；只用 Host 的 `deepseekAccount` 服务（`ctx.get('deepseekAccount')`），零 npm 依赖 | 查余额 | 只影响余额；进度和用量照常 |
 | Coopanion 包 `cortico-world-dsh-monitor` | 本仓库 workspace 包，`cortico.api: 6`，`engines.node >= 22` | 读投影缓存、算用量、`detectMilestones()` | 桌宠包以 `workspace:*` 依赖它，缺了装不上 |
 
-关于 `DSH_HOME`：余额与今日用量在没设这个变量时会退回 `~/.dsh`；进度气泡读的投影缓存目录是由它推出来的，没设时按「没有目录」处理（`defaultCacheDir()` 返回空串），于是什么也不弹。想让进度气泡工作，就把 `DSH_HOME` 指向 DSH 的数据目录。
+关于 `DSH_HOME`：三个目录都由它推导，没设这个变量时统一回退到 `~/.dsh`（家目录按 `USERPROFILE` → `HOME` → 当前目录兜底），`defaultCacheDir()` / `defaultBridgeDir()` / `defaultSessionsDir()` 因此**不会**再返回空串——以前投影缓存目录没设变量就是空串，进度气泡什么也不弹，现在开箱即用。只有想把数据放到别处时才需要把 `DSH_HOME` 指过去。
 
 两个功能都不联网，也不需要任何凭据：网络请求和账号凭据都留在 DSH 自己那一侧，Coopanion 这边只读文件。
 
@@ -156,7 +156,7 @@ New-Item -ItemType Junction -Path "$profile\node_modules\coopanion-account-bridg
 
 ## 五、配置项
 
-两组键都在控制台的 World 配置页里（也可以直接改 `config.json`）。标了热改的键改完下一拍就生效；`progress.intervalSeconds` 例外，间隔在桌宠启动时装好，改完要下次启动才用新值。
+两组键都在控制台的 World 配置页里（也可以直接改 `config.json`）。标了热改的键改完下一拍就生效，`progress.intervalSeconds` 也一样：下一拍就把周期的表重挂成新值，不重新暖机，也不动已经建好的基线。
 
 ### `worlds.desktop-pet.progress.*`（进度气泡）
 

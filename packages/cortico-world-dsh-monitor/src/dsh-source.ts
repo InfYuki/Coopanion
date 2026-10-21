@@ -110,22 +110,8 @@ export interface ReadResult {
   unreadable: number;
 }
 
-/** 家目录兜底：与 account.ts 的 `homedirFallback()` 同一策略（USERPROFILE → HOME → `.`）。 */
-function homedirFallback(env: NodeJS.ProcessEnv): string {
-  return env.USERPROFILE || env.HOME || '.';
-}
-
-/**
- * DSH 把投影缓存放在这里。
- *
- * 与 `account.ts` 的两个目录函数一致：`DSH_HOME` 有值时跟着走，缺失时回退到 `~/.dsh`。
- * 从开始菜单 / 普通 shell 启动的进程没有 `DSH_HOME`，以前这里返回空串，
- * 让 `readSessions('')` 直接给空结果、进度气泡与 `dsh_*` 工具静默失效；现在总有可读的默认路径。
- */
-export function defaultCacheDir(env: NodeJS.ProcessEnv = process.env): string {
-  const home = env.DSH_HOME?.trim();
-  return join(home || join(homedirFallback(env), '.dsh'), 'storages', 'session_projcache', 'sessions');
-}
+/** 目录推导统一在 `paths.ts`；这里只做转出，保持既有 import 路径可用。 */
+export { defaultCacheDir } from './paths.ts';
 
 /** 数字字段的宽容读取：DSH 的行可能缺字段，缺了算 0。 */
 function num(value: unknown): number {

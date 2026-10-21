@@ -112,7 +112,7 @@ node examples/dragon/check-stride.mjs
 
 观察独立于电脑操作开关，不授予输入权限或修改交互截图坐标。只有桌宠连接且未隐藏、Coo 空闲、没有等待回答且非暂停/安静时段、模型支持 JPEG 时才捕获；截图完成再次检查，关闭/停止取消后不提交。截图交当前模型生成一句简短友善调侃，也可保持安静；截图保存于 Core 事件附件并进入模型上下文，关闭不删除既有记录。普通聊天页显示回复，不显示观察截图。
 
-本轮检查：根36文件296通过1跳过，World34文件322通过，三个类型检查和 `build:cortico` 通过。测试使用生成的 JPEG、隔离 Core/WebSocket 和脚本模型验证完整事件与气泡链路，未对真实屏幕或用户安装数据进行验证。本次功能仅本地提交，最新已推送的文档与 Codex 功能为此前的 `427a8f4`。
+本轮检查：根36文件296通过1跳过，World34文件322通过，三个类型检查和 `build:cortico` 通过。测试使用生成的 JPEG、隔离 Core/WebSocket 和脚本模型验证完整事件与气泡链路，未对真实屏幕或用户安装数据进行验证。功能代码与设置已纳入 `Coo-GPT`，当前提交以 Git HEAD 为准。
 
 ### Codex 监控（2026-10-21 新增）
 
@@ -120,7 +120,7 @@ node examples/dragon/check-stride.mjs
 
 左键显示 DSH/Codex 合并摘要，右键账户详情默认 Codex，按钮切换 DSH。首次扫描不补播历史，后续轮次/目标完成、计划与子代理节点、失败/中断/阻塞/审批直接弹气泡并只入显示历史。额度通过短时 app-server 只读 RPC 读取，至少缓存 300 秒；本机历史读取有预算，fork 继承历史去重，覆盖不完整时界面明确标注。远端机器未同步的日志不在本机监控范围。
 
-验证：根测试 35 文件、293 通过 1 跳过；World 测试 30 文件、291 通过；三个类型检查及 `build:cortico` 通过。真实 Codex 只读账户与日志适配冒烟通过；未启动用户安装的 Coopanion，尚未进行用户桌面上的视觉验收。本次不推送远端；当前提交以 Git HEAD 为准。
+验证：根测试 35 文件、293 通过 1 跳过；World 测试 30 文件、291 通过；三个类型检查及 `build:cortico` 通过。真实 Codex 只读账户与日志适配冒烟通过；未启动用户安装的 Coopanion，尚未进行用户桌面上的视觉验收。当前提交以 Git HEAD 为准。
 
 1. 读取 `AGENTS.md` 和本文件；确认 `git branch --show-current`、`git status --short`。新环境使用 `git clone --recurse-submodules --branch Coo-GPT https://github.com/InfYuki/Coopanion.git`。
 2. 按上文恢复本地素材，阅读 dragon README、motion.js 与 figure.js；不要从旧 zip 覆盖源码。

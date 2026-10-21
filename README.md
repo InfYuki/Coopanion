@@ -65,6 +65,8 @@ This branch adds the following features. See [the feature and dependency guide](
 | Codex task progress bubbles | Reports explicit turn/goal completion, plan progress, subagent completion, failures, interruptions, blocking and approval requests. | Logs from the configured local Codex data directory; compatible SQLite metadata adds titles and goal states. |
 | Random screen observations | When enabled, captures the current screen at a newly randomized interval and lets Coo offer one short, friendly quip. Off by default; the minimum and maximum intervals are adjustable. | A vision-capable active model and working screen-capture permissions. Screenshots enter Core event storage and model context; model usage can incur cost. See [screen observations](docs/SCREEN-OBSERVATION.md). |
 
+Enable observations in **Settings → Habits → Screen observation**. The default random interval is 5–15 minutes; both bounds can be set from 30 seconds to 24 hours, with the minimum no greater than the maximum. Each observation or skipped attempt draws a new interval; busy, paused and quiet periods skip the attempt. Turning observations off stops future captures and keeps existing records.
+
 Character PNGs are not committed to Git. A source clone needs the separately supplied dragon assets before the figure can render. These branch additions are not implied to be included in the upstream release downloads linked below.
 
 Left-click Coo for the combined DSH/Codex usage preview. Account details open the Codex card with Codex/DSH buttons; disabling Codex monitoring opens DSH directly. Both task monitors establish a baseline on startup and show later milestones without creating model turns.
@@ -294,7 +296,7 @@ After installing, click **Restart process** and enable it in **World Overview**.
 ## Cost and privacy
 
 - **Cost**: Coopanion is free. The model service you choose bills you for usage; see the Usage & cost page (built-in prices exist for DeepSeek, OpenAI, Anthropic, Gemini's paid tier and xAI). Signed in with ChatGPT, requests count toward the ChatGPT plan instead and show no cost.
-- **Sent to the model service**: what you say and type, your interactions with Coo, and screenshots during computer use. Only the service you configured receives them.
+- **Sent to the model service**: what you say and type, your interactions with Coo, and screenshots during computer use or enabled screen observations. Only the service you configured receives them. Observation screenshots are also saved as local event attachments.
 - **Kept on your machine**: API keys and the ChatGPT sign-in, memory, conversation history, settings and logs. Speech is recognized locally and only the text is sent.
 - **Anonymous usage statistics**: sent to `survey.palailab.org`. Only counts, time used, settings and a random install ID; no conversations, screenshots, keys or files. Every field is listed in [docs/TELEMETRY.md](docs/TELEMETRY.md). Turn it off in Habits.
 - **Other network access**: checks for new releases on GitHub (in the background on Windows and with the AppImage, when the settings window opens on Mac and with the deb); npm and the official extension index on GitHub on the Extensions page, and GitHub for votes and comments; ModelScope (or Hugging Face as a fallback) when downloading the speech model.

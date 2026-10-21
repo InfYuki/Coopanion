@@ -29,6 +29,7 @@
     "cortico-provider-coo": "workspace:*",
     "cortico-world-desktop-pet": "workspace:*",
     "cortico-world-dsh-monitor": "workspace:*",
+    "cortico-world-codex-monitor": "workspace:*",
     "electron-updater": "^6.8.9",
     "express": "^4.22.3",
     "pnpm": "11.28.6",

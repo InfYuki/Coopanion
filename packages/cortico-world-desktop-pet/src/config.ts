@@ -5,6 +5,7 @@ import type { WorldSection } from 'cortico/world.ts';
 import type { SegmentConfig } from './asr/segmenter.ts';
 import { DEFAULT_HOTKEY } from './asr/hotkey.ts';
 import { capFor, petText } from './i18n/index.ts';
+import { codexText } from './i18n/codex.ts';
 import { CUA_DEFAULTS, cuaConfigGroup, type CuaConfig } from './cua/config.ts';
 
 export const DESKTOP_PET_ID = 'desktop-pet';
@@ -180,6 +181,15 @@ export interface DesktopPetConfigSection extends WorldSection {
     /** 完成时是否单独弹一条汇报。 */
     reportCompletion: boolean;
   };
+  /** Local Codex sessions and account limits (src/codex.ts). */
+  codex: {
+    enabled: boolean;
+    /** Empty follows CODEX_HOME, then the user's .codex directory. */
+    home: string;
+    /** Empty discovers the installed Codex executable. */
+    executable: string;
+    accountRefreshSeconds: number;
+  };
   /** How far the bot may change its own looks and habits (src/self.ts); read through `selfAdjustMode`. */
   selfAdjust: SelfAdjust;
   /** Under `custom`: per item, true = changed at once, false = asked first. */
@@ -240,6 +250,7 @@ export const DESKTOP_PET_DEFAULTS: DesktopPetConfigSection = {
   doubleClickChat: false,
   statusBubble: true,
   progress: { enabled: true, intervalSeconds: 20, coalesceSeconds: 15, idleSeconds: 90, reportCompletion: true },
+  codex: { enabled: true, home: '', executable: '', accountRefreshSeconds: 300 },
   selfAdjust: 'default',
   selfAdjustCustom: { ...SELF_DEFAULT },
   skin: {
@@ -267,6 +278,7 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
   const c = petText(language).config;
   // 进度气泡的配置项与气泡文字同住一个顶层键：别的语言没有这一组时整组读 zh / en，不会缺键
   const p = petText(language).progress.config;
+  const codex = codexText(language).config;
   const userMax = capFor(USER_MAX, language);
   const pet: ConfigGroup = {
     id: `world:${DESKTOP_PET_ID}`,
@@ -307,6 +319,19 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
       },
     },
   };
+  const codexGroup: ConfigGroup = {
+    id: `world:${DESKTOP_PET_ID}:codex`,
+    owner: `world:${DESKTOP_PET_ID}`,
+    schema: {
+      type: 'object', title: codex.group,
+      properties: {
+        [`${K}.codex.enabled`]: { type: 'boolean', title: codex.enabled.title, description: codex.enabled.description, 'x-hot': true },
+        [`${K}.codex.home`]: { type: 'string', title: codex.home.title, description: codex.home.description, 'x-path': { kind: 'directory' }, 'x-hot': true },
+        [`${K}.codex.executable`]: { type: 'string', title: codex.executable.title, description: codex.executable.description, 'x-path': { kind: 'file' }, 'x-hot': true },
+        [`${K}.codex.accountRefreshSeconds`]: { type: 'integer', title: codex.accountRefresh.title, description: codex.accountRefresh.description, minimum: 300, maximum: 3600, 'x-suffix': codex.accountRefresh.suffix, 'x-hot': true },
+      },
+    },
+  };
   const sound: ConfigGroup = {
     id: `world:${DESKTOP_PET_ID}:sound`,
     owner: `world:${DESKTOP_PET_ID}`,
@@ -340,5 +365,5 @@ export function desktopPetConfigGroups(language: Language = 'zh'): ConfigGroup[]
       },
     },
   };
-  return [pet, sound, asr, cuaConfigGroup(language)];
+  return [pet, sound, asr, cuaConfigGroup(language), codexGroup];
 }

@@ -50,7 +50,7 @@ if (PORTABLE && process.platform !== 'win32') {
   process.exit(1);
 }
 const rootPkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as Record<string, unknown> & { version: string };
-const WORKSPACE = ['cortico-world-desktop-pet', 'cortico-provider-coo'];
+const WORKSPACE = ['cortico-world-desktop-pet', 'cortico-provider-coo', 'cortico-world-dsh-monitor', 'cortico-world-codex-monitor'];
 /**
  * Runtime dependencies: Core (express, ws), the TypeScript loader, pnpm for extension installs, the updater
  * (app/updater.cjs, not in the portable build) or for Steam steamworks.js (app/steam.cjs), and the workspace packages' own.
@@ -61,7 +61,9 @@ const DEPS: Record<string, string> = {
 };
 for (const name of WORKSPACE) {
   const pkg = JSON.parse(readFileSync(join(ROOT, 'packages', name, 'package.json'), 'utf8')) as { dependencies?: Record<string, string> };
-  Object.assign(DEPS, pkg.dependencies ?? {});
+  for (const [dependency, version] of Object.entries(pkg.dependencies ?? {})) {
+    if (!WORKSPACE.includes(dependency)) DEPS[dependency] = version;
+  }
 }
 
 /**

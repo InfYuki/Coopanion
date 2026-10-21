@@ -1,0 +1,12 @@
+{
+  "name": "cortico-world-codex-monitor",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Read-only Codex session and account monitoring",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts", "./src/*": "./src/*" },
+  "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit" },
+  "engines": { "node": ">=22" },
+  "devDependencies": { "@types/node": "^22.10.0", "typescript": "^5.7.2", "vitest": "^2.1.8" }
+}

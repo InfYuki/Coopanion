@@ -59,6 +59,10 @@ With DeepSeek Harness (DSH) on the same machine, Coo reads what it writes locall
 | Task progress bubbles | Pops a bubble when a DSH subagent, turn, todo or goal finishes, with no model turn. | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
 | Today's usage & account balance | Click the pet for today's tokens and balance; the menu shows the full page. | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
 
+### Codex integration
+
+Coo monitors tasks in the selected local Codex profile and shows local token usage with account quota in its usage bubble and account details. A left click shows a combined usage preview; account details open the Codex card, with Codex/DSH buttons to switch sources. Disabling Codex opens the DSH card directly. Explicit turn completion, plan steps, goals, subagents, failures and approval requests can trigger progress bubbles. Account limits refresh through the installed Codex app-server, using its existing login; old snapshots are marked stale. Other devices and remote sessions absent from local logs are outside local coverage. Configure **Codex monitoring** in settings. See [Codex monitoring](docs/CODEX-MONITOR.md).
+
 ## Install
 
 You need one of:

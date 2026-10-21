@@ -91,6 +91,7 @@ async function mounted(): Promise<{ world: DesktopPetWorld; page: FakePage }> {
   cfg.port = 0;
   cfg.window.enabled = false;
   cfg.asr.enabled = false;
+  cfg.codex.enabled = false;
   const dir = mkdtempSync(join(tmpdir(), 'pet-'));
   const world = new DesktopPetWorld({
     cfg, timezone: 'Asia/Shanghai',

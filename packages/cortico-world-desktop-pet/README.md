@@ -14,6 +14,14 @@ bot 在屏幕底边有一个小身体,由一个形象包提供(见下文):内置
 沿屏幕底边走动、做表情和动作;人可以对它说话(FunASR 或 Whisper 在本机识别,Windows 上也可用系统自带的识别)、打字、点选项、戳它、摸它、
 把它拎起来甩出去,这些都作为事件送回 bot。开了电脑操作时,bot 还能看屏幕、动鼠标键盘(见「电脑操作」)。
 
+## Codex 与 DSH 监控
+
+桌宠左键用量气泡合并显示 DSH 与 Codex 摘要。右键账户详情默认显示 Codex 卡片，使用 Codex / DSH 按钮切换；关闭 Codex 监控后直接显示 DSH 卡片。`src/codex.ts` 使用 `cortico-world-codex-monitor` 读取本机 Codex 日志及账户快照；明确的轮次、计划、目标和子代理节点可触发气泡，失败、中断、阻塞与批准请求也可提醒。首次扫描建立基线，不补播历史记录。
+
+`worlds.desktop-pet.codex.enabled` 同时控制 Codex 进度和账户读取；`codex.home` 留空按 `CODEX_HOME`、用户主目录下 `.codex` 解析；`codex.executable` 可指定本机 Codex 原生程序；`codex.accountRefreshSeconds` 默认及最短 300 秒。四项均热更新。进度气泡复用 `progress.enabled`、`intervalSeconds`、`coalesceSeconds` 和 `reportCompletion`。
+
+账户额度通过短时 `app-server` 使用 Codex 现有登录读取，可能联网；失败时可保留本机日志的旧额度快照，并显示更新时间和过期状态。本机 token 与账户额度分开标注；本机统计不覆盖其他设备、未落到本机日志的远端会话或未记录历史。详见 [Codex 监控](../../docs/CODEX-MONITOR.md) 与 [DSH 监控](../../docs/DSH-MONITOR.md)。
+
 ## 工具
 
 | 工具 | 作用 | 回执 |

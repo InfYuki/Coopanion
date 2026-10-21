@@ -5,7 +5,9 @@
     "packages/cortico-world-desktop-pet/src/**/*.ts",
     "packages/cortico-world-desktop-pet/tests/**/*.ts",
     "packages/cortico-world-dsh-monitor/src/**/*.ts",
-    "packages/cortico-world-dsh-monitor/tests/**/*.ts"
+    "packages/cortico-world-dsh-monitor/tests/**/*.ts",
+    "packages/cortico-world-codex-monitor/src/**/*.ts",
+    "packages/cortico-world-codex-monitor/tests/**/*.ts"
   ],
   "exclude": ["node_modules", "packages/cortico-world-desktop-pet/tests/cua/e2e"]
 }

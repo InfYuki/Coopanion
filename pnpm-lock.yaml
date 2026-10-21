@@ -11,6 +11,9 @@ importers:
       cortico-provider-coo:
         specifier: workspace:*
         version: link:packages/cortico-provider-coo
+      cortico-world-codex-monitor:
+        specifier: workspace:*
+        version: link:packages/cortico-world-codex-monitor
       cortico-world-desktop-pet:
         specifier: workspace:*
         version: link:packages/cortico-world-desktop-pet
@@ -106,8 +109,23 @@ importers:
         specifier: 0.128.0
         version: 0.128.0
 
+  packages/cortico-world-codex-monitor:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.4
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.4)(jsdom@30.1.0(@noble/hashes@2.4.0))(lightningcss@1.32.0)(supports-color@7.2.0)
+
   packages/cortico-world-desktop-pet:
     dependencies:
+      cortico-world-codex-monitor:
+        specifier: workspace:*
+        version: link:../cortico-world-codex-monitor
       cortico-world-dsh-monitor:
         specifier: workspace:*
         version: link:../cortico-world-dsh-monitor

@@ -35,6 +35,8 @@ import {
 } from './config.ts';
 import { capFor, cutChars, petText, type PetText } from './i18n/index.ts';
 import { formatCompletion, formatMilestones } from './progress.ts';
+import { PetCodexMonitor, codexAccountLines, codexMilestoneLine } from './codex.ts';
+import { codexText } from './i18n/codex.ts';
 import { PetServer, type PageMessage } from './server.ts';
 import {
   defaultBridgeDir,
@@ -379,6 +381,9 @@ export class DesktopPetWorld implements World {
   private lastProgressAt = 0;
   /** The first progress look only builds the baseline: what was already settled before the pet started is not news. */
   private progressPrimed = false;
+  private readonly codex = new PetCodexMonitor();
+  private codexTick: Promise<void> | null = null;
+  private lastCodexProgressAt = 0;
   /** Where the pet window last said the pet stands, measured as `petX` is; written by `savePosition` on stop. */
   private standX: number | null = null;
   private readonly voiceSockets = new Set<WorldStreamSocket>();
@@ -658,6 +663,7 @@ export class DesktopPetWorld implements World {
     if (this.prefsTimer) clearInterval(this.prefsTimer);
     this.prefsTimer = null;
     this.disarmProgress();
+    this.codex.dispose();
     this.savePosition();
     await this.importer?.cancel();
     if (this.packTimer) clearTimeout(this.packTimer);
@@ -790,6 +796,12 @@ export class DesktopPetWorld implements World {
       if (Date.now() < this.busyUntil) return;
       if (this.phase !== null && this.phase.state !== 'idle') return;
       const p = this.progressCfg();
+      this.configureCodex();
+      if (!this.codexTick) {
+        const task = this.tickCodexProgress();
+        this.codexTick = task;
+        void task.finally(() => { if (this.codexTick === task) this.codexTick = null; });
+      }
       if (!p.enabled) return;
       const sessions = readSessions(defaultCacheDir()).sessions.slice(0, PROGRESS_SESSIONS);
       if (sessions.length === 0) return;
@@ -810,6 +822,35 @@ export class DesktopPetWorld implements World {
       this.sayProgress(formatMilestones(milestones, this.ui.progress, PROGRESS_LINES));
     } catch (err) {
       this.log?.warn(`任务进度没能读出来:${(err as Error).message}`);
+    }
+  }
+
+  private configureCodex(): boolean {
+    const config = { ...DESKTOP_PET_DEFAULTS.codex, ...this.cfg.codex };
+    this.codex.configure(config, this.opts.timezone);
+    return config.enabled;
+  }
+
+  private async tickCodexProgress(): Promise<void> {
+    try {
+      const snapshot = await this.codex.scan();
+      if (this.stopped || !snapshot) return;
+      // Quota reads have a separate cache and do not delay task notifications.
+      if (snapshot.available) void this.codex.refreshAccount().catch(() => {});
+      const p = this.progressCfg();
+      if (!p.enabled) { this.codex.takeMilestones(); return; }
+      if (!this.server.petConnected || Date.now() < this.busyUntil || (this.phase !== null && this.phase.state !== 'idle')) return;
+      if (Date.now() - this.lastCodexProgressAt < p.coalesceSeconds * 1000) return;
+      const events = this.codex.takeMilestones().filter(e => p.reportCompletion || !['turn_complete', 'goal_complete', 'agent_complete'].includes(e.kind));
+      if (!events.length) return;
+      const priority = new Set(['failed', 'blocked', 'approval', 'interrupted', 'goal_complete', 'turn_complete', 'agent_complete']);
+      events.sort((a, b) => Number(priority.has(b.kind)) - Number(priority.has(a.kind)) || a.timestamp - b.timestamp);
+      const lines = events.slice(0, PROGRESS_LINES).map(event => codexMilestoneLine(event, snapshot, this.appLanguage));
+      if (events.length > PROGRESS_LINES) lines.push(codexText(this.appLanguage).progress.more(events.length - PROGRESS_LINES));
+      this.sayProgress(lines.join('\n'));
+      this.lastCodexProgressAt = Date.now();
+    } catch (err) {
+      this.log?.warn(`Codex monitor: ${(err as Error).message}`);
     }
   }
 
@@ -1226,17 +1267,24 @@ export class DesktopPetWorld implements World {
     }
   }
 
-  /**
-   * 账号与余额：人在桌宠上问的，不走对话，直接读 DSH 的两个文件答在气泡里。
-   *
-   * 只读：今日用量来自会话事件日志（按本地日期现算），余额来自 DSH 侧桥接插件发布的
-   * `account.json`。拿不到就说拿不到，不猜数字。
-   */
-  private showAccount(full: boolean): void {
+  /** Account cards read their source directly; requests do not enter the bot's context. */
+  private showAccount(full: boolean, source: 'codex' | 'dsh' = 'codex'): void {
     const today = readTodayUsage(defaultSessionsDir(), Date.now());
     const account = readAccount(defaultBridgeDir());
     const lines = full ? this.accountCard(today, account) : this.accountPeek(today, account);
-    this.dialog({ text: lines.join('\n') });
+    if (!this.configureCodex()) { this.dialog({ text: lines.join('\n') }); return; }
+    const text = () => {
+      const codex = codexAccountLines(this.codex.current(), this.appLanguage, humanTokens, full, Date.now(), this.opts.timezone);
+      return (full ? source === 'codex' ? codex : lines : [...lines, '', ...codex]).join('\n');
+    };
+    const handle = this.dialog({ text: text(), ...(full ? { closable: true, input: { kind: 'buttons' as const, options: [{ label: 'Codex' }, { label: 'DSH' }] } } : {}) });
+    if (full) void handle.answer.then(answer => {
+      if (!this.stopped && 'index' in answer) this.showAccount(true, answer.index === 0 ? 'codex' : 'dsh');
+    });
+    void Promise.allSettled([this.codex.scan(), this.codex.refreshAccount()]).then(() => {
+      if (this.stopped) return;
+      handle.update({ text: text() });
+    });
   }
 
   /** 左键点一下看到的两行。 */

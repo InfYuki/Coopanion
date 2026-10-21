@@ -1,4 +1,4 @@
-<!-- Owner: packages/cortico-world-desktop-pet/web/dragon/figure.json; packages/cortico-world-desktop-pet/web/kit/body.js; packages/cortico-world-dsh-monitor/src/paths.ts -->
+<!-- Owner: packages/cortico-world-desktop-pet/web/dragon/figure.json; packages/cortico-world-desktop-pet/web/kit/body.js; packages/cortico-world-dsh-monitor/src/paths.ts; packages/cortico-world-codex-monitor/src/source.ts; packages/cortico-world-desktop-pet/src/codex.ts -->
 # Coo-GPT 工作交接
 
 更新时间：2026-10-21。项目：`https://github.com/InfYuki/Coopanion`，工作分支：`Coo-GPT`。本文件用于新会话恢复当前项目；先读取仓库 `AGENTS.md`。
@@ -105,6 +105,14 @@ node examples/dragon/check-stride.mjs
 当前用户查看的 `http://127.0.0.1:4329/gait.html` 是本地 scratch 预览；进程结束后需重新启动，不能认为新会话中端口必然存在。本机服务文件为 `scratch/dragon-remake-20261020/server.mjs`，可从仓库根目录运行 `node scratch/dragon-remake-20261020/server.mjs`。这些临时文件未入库。跨机器可在 desktop-pet 包目录启动静态 HTTP 服务，打开 `/examples/dragon/index.html?enter=none` 或 `/examples/dragon/debug.html?bg=dark&scheme=origin-s`。
 
 ## 新会话起点
+
+### Codex 监控（2026-10-21 新增）
+
+`Coo-GPT` 已增加 Codex 账户额度、账户/本机 token 用量和任务进度气泡，详见 `docs/CODEX-MONITOR.md`。数据层在 `packages/cortico-world-codex-monitor`；桌宠集成在 `src/codex.ts`、`src/world.ts`，配置为 `worlds.desktop-pet.codex.*`。
+
+左键显示 DSH/Codex 合并摘要，右键账户详情默认 Codex，按钮切换 DSH。首次扫描不补播历史，后续轮次/目标完成、计划与子代理节点、失败/中断/阻塞/审批直接弹气泡并只入显示历史。额度通过短时 app-server 只读 RPC 读取，至少缓存 300 秒；本机历史读取有预算，fork 继承历史去重，覆盖不完整时界面明确标注。远端机器未同步的日志不在本机监控范围。
+
+验证：根测试 35 文件、293 通过 1 跳过；World 测试 30 文件、291 通过；三个类型检查及 `build:cortico` 通过。真实 Codex 只读账户与日志适配冒烟通过；未启动用户安装的 Coopanion，尚未进行用户桌面上的视觉验收。本次不推送远端；当前提交以 Git HEAD 为准。
 
 1. 读取 `AGENTS.md` 和本文件；确认 `git branch --show-current`、`git status --short`。新环境使用 `git clone --recurse-submodules --branch Coo-GPT https://github.com/InfYuki/Coopanion.git`。
 2. 按上文恢复本地素材，阅读 dragon README、motion.js 与 figure.js；不要从旧 zip 覆盖源码。

@@ -59,6 +59,10 @@ Coopanion 是一个桌宠。桌宠 **Coo** 待在屏幕底边，可以用气泡�
 | 任务进度气泡 | 子代理、会话、待办或目标做完时弹一条气泡，不产生对话轮次。 | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
 | 今日用量与账户余额 | 左键点一下看今天的 token 和余额，右键菜单里打开完整一页。 | [docs/DSH-MONITOR.md](docs/DSH-MONITOR.md) |
 
+### Codex 集成
+
+Coo 可监控选定本机 Codex profile 的任务，在用量气泡和账户详情里显示本机 token 与账户额度。左键气泡合并展示两者摘要；右键账户详情默认打开 Codex 卡片，可通过 Codex / DSH 按钮切换来源；关闭 Codex 监控后直接显示 DSH 卡片。明确的轮次完成、计划步骤、目标、子代理、失败和批准请求可触发进度气泡。额度通过已安装的 Codex app-server 使用现有登录状态刷新，旧快照标注过期。本机日志中没有的远端会话及其他设备不在本机统计范围内。在设置的「Codex 监控」中配置，详见 [Codex 监控说明](docs/CODEX-MONITOR.md)。
+
 ## 安装
 
 需要以下系统之一：

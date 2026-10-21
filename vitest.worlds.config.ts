@@ -5,9 +5,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: { alias: [{ find: /^cortico\//, replacement: fileURLToPath(new URL('./vendor/cortico/src/', import.meta.url)) }] },
   test: {
+    setupFiles: ['./tests/setup-worlds.ts'],
     include: [
       'packages/cortico-world-desktop-pet/tests/**/*.test.ts',
       'packages/cortico-world-dsh-monitor/tests/**/*.test.ts',
+      'packages/cortico-world-codex-monitor/tests/**/*.test.ts',
     ],
     exclude: ['**/tests/cua/e2e/**', '**/node_modules/**'],
     env: { CORTICO_LANGUAGE: 'zh' },

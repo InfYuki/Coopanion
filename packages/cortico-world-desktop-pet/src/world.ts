@@ -335,6 +335,8 @@ function parseChatImages(raw: unknown, user: string, s: PetText['chat'], m: Mode
 export class DesktopPetWorld implements World {
   readonly id = DESKTOP_PET_ID;
   private host: WorldHost | null = null;
+  /** Between `stop` and the next `start`: a late `refresh` must not bring back the timers the stop cleared. */
+  private stopped = false;
   private log: Logger | null = null;
   private readonly cfg: DesktopPetConfigSection;
   private readonly server: PetServer;
@@ -369,6 +371,8 @@ export class DesktopPetWorld implements World {
   /** The progress bubble's first look (`PROGRESS_WARMUP_MS`), then `progressTimer` keeps it going. */
   private progressWarmup: NodeJS.Timeout | null = null;
   private progressTimer: ReturnType<typeof setInterval> | null = null;
+  /** The interval `progressTimer` was built with: `syncPrefs` rearms the clock when the config asks for another one. */
+  private progressEveryMs = 0;
   /** What `detectMilestones` saw last look: the milestones already said are not said again. */
   private milestoneState = emptyMilestoneState();
   /** When a progress bubble was last said: two of them stay `progress.coalesceSeconds` apart. */
@@ -611,6 +615,7 @@ export class DesktopPetWorld implements World {
 
   async start(host: WorldHost): Promise<void> {
     this.host = host;
+    this.stopped = false;
     this.startCursor = host.store.latestCursor() + 1;
     this.log = host.log;
     this.cua.start(host);
@@ -642,19 +647,17 @@ export class DesktopPetWorld implements World {
     await this.syncHotkey();
     this.prefsKey = this.prefsSignature();
     this.prefsTimer = setInterval(() => this.syncPrefs(), PREFS_SYNC_MS);
-    this.startProgress();
+    this.armProgress();
   }
 
   async stop(): Promise<void> {
+    this.stopped = true;
     this.status.clear();
     if (this.quiet) clearTimeout(this.quiet.timer);
     this.quiet = null;
     if (this.prefsTimer) clearInterval(this.prefsTimer);
     this.prefsTimer = null;
-    if (this.progressWarmup) clearTimeout(this.progressWarmup);
-    this.progressWarmup = null;
-    if (this.progressTimer) clearInterval(this.progressTimer);
-    this.progressTimer = null;
+    this.disarmProgress();
     this.savePosition();
     await this.importer?.cancel();
     if (this.packTimer) clearTimeout(this.packTimer);
@@ -697,18 +700,46 @@ export class DesktopPetWorld implements World {
    *
    * The clock runs whether or not `progress.enabled` is on, so switching it on in the console takes
    * effect at the next look: `tickProgress` reads the switch each time and says nothing while it is
-   * off. `intervalSeconds` is the exception — the interval is fixed when the clock is set up, so a
-   * new one takes effect at the next start, not on the next look.
+   * off. `intervalSeconds` is read each time too: `syncPrefs` compares it with `progressEveryMs` and
+   * rearms the interval when it changed, so a new interval takes effect at the next look as well —
+   * only the repeating interval is rebuilt, not the warmup, and the baseline is left alone.
    */
-  private startProgress(): void {
-    const p = this.progressCfg();
-    const every = Math.max(1, p.intervalSeconds) * 1000;
+  private armProgress(): void {
+    const every = Math.max(1, this.progressCfg().intervalSeconds) * 1000;
+    this.progressEveryMs = every;
     this.progressPrimed = false;
     this.progressWarmup = setTimeout(() => {
       this.progressWarmup = null;
       void this.tickProgress();
       this.progressTimer = setInterval(() => void this.tickProgress(), every);
     }, PROGRESS_WARMUP_MS);
+  }
+
+  /** Stops the clock: no warmup look and no interval. The baseline and the last bubble's time are kept. */
+  private disarmProgress(): void {
+    if (this.progressWarmup) clearTimeout(this.progressWarmup);
+    this.progressWarmup = null;
+    if (this.progressTimer) clearInterval(this.progressTimer);
+    this.progressTimer = null;
+  }
+
+  /**
+   * A new `intervalSeconds` reaches the running clock here: the interval is rebuilt with the new
+   * period, without another warmup and without touching `progressPrimed`, `milestoneState` or
+   * `lastProgressAt` — a change of pace is not a change of baseline, and the coalescing gap keeps
+   * counting from the last bubble actually said.
+   */
+  private syncProgressInterval(): void {
+    if (this.stopped) return;
+    const every = Math.max(1, this.progressCfg().intervalSeconds) * 1000;
+    if (every === this.progressEveryMs) return;
+    // the first interval of a start belongs to the warmup callback, which took the period it was armed
+    // with; recording the new one here would hide it from the next look, so it is recorded only when a
+    // rebuild really happens (until then `progressEveryMs` names the period actually running)
+    if (!this.progressTimer) return;
+    this.progressEveryMs = every;
+    clearInterval(this.progressTimer);
+    this.progressTimer = setInterval(() => void this.tickProgress(), every);
   }
 
   /** `cfg.progress`, with the defaults for a config written before this section existed (or written half). */
@@ -1004,6 +1035,7 @@ export class DesktopPetWorld implements World {
 
   /** Config is a live object edited by the console; changes reach the pages within PREFS_SYNC_MS. */
   private syncPrefs(): void {
+    this.syncProgressInterval();
     this.segmenter.configure(this.segmentConfig());
     if (this.cfg.asr.enabled && this.runningEngine && this.runningEngine !== this.engine()) void this.startVoiceBackend();
     // the system recognizer serves one language; a new one needs a new helper
